@@ -1,0 +1,3156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Servicios EM - Inventario y Ventas</title>
+<style>
+/* --- Reportes --- */
+.sub-tabs-menu {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 24px 0;
+  gap: 5px;
+  background: #fff4;
+  border-radius: 12px;
+  padding: 6px 0 2px 0;
+}
+.sub-tab-btn {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 10px 22px;
+  margin: 0 2px;
+  font-size: 1em;
+  font-weight: bold;
+  color: #4e4376;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s, border 0.12s, color 0.12s;
+}
+.sub-tab-btn.active {
+  background: linear-gradient(90deg, #ffd6e0 60%, #ffe082 100%);
+  border-bottom: 3px solid #f9d423;
+  color: #d72660;
+  box-shadow: 0 2px 10px #d7266011;
+}
+.reporte-block {
+  background: #fffbe6;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px #ffd6e033;
+  margin: 20px auto;
+  max-width: 700px;
+  padding: 24px 28px;
+}
+.reporte-block h2 {
+  margin-top: 0;
+  color: #4e4376;
+}
+.reporte-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.reporte-block li {
+  margin-bottom: 8px;
+  font-size: 1.08em;
+}
+.reporte-block .ganancia {
+  color: #1b8a10;
+  font-weight: bold;
+  font-size: 1.14em;
+}
+.reporte-block .perdida {
+  color: #c0392b;
+  font-weight: bold;
+  font-size: 1.14em;
+}
+   @media (max-width: 600px) {
+  .sub-tabs-menu {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .sub-tab-btn {
+    font-size: 1.1em;
+    padding: 12px 8px;
+    border-radius: 6px;
+  }
+  section {
+    padding: 8px;
+  }
+  input, select, textarea, button {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+  }
+}
+  /* Marquesina animada superior */
+  .marquee {
+    width: 100%;
+    background: linear-gradient(90deg, #2b5876, #4e4376);
+    color: #fff;
+    padding: 12px 0;
+    font-size: 1.15em;
+    font-weight: bold;
+    overflow: hidden;
+    position: fixed;
+    top: 0; left: 0; z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+  }
+  .marquee span {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marqueeMove 15s linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes marqueeMove {
+    from { transform: translateX(0);}
+    to { transform: translateX(-100%);}
+  }
+
+  /* Fondo y fuente general */
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0 0 30px 0;
+    background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%);
+    min-height: 100vh;
+  }
+
+  h1 {
+    color: #fff;
+    margin-top: 80px;
+    text-align: center;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 12px #b15d5d77;
+    letter-spacing: 2px;
+  }
+  h2 {
+    color: #4e4376;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  /* Secciones como tarjetas */
+  section {
+    background: linear-gradient(120deg, #fffbe6 80%, #ffd6e0 100%);
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 4px 16px 0 #00000017;
+    padding: 22px 36px 24px 36px;
+    margin: 28px auto;
+    max-width: 950px;
+    transition: box-shadow 0.24s;
+  }
+  section:hover {
+    box-shadow: 0 8px 32px 0 #b15d5d21;
+    background: linear-gradient(120deg, #fffbe6 60%, #ffe5ec 100%);
+  }
+
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
+    color: #4527a0;
+    font-size: 1.06em;
+  }
+  input, select, button, textarea {
+    width: 320px;
+    padding: 9px 11px;
+    margin-top: 4px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.17s, box-shadow 0.17s;
+    outline: none;
+    background: #f9fafc;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #4e4376;
+    box-shadow: 0 0 0 2px #b39ddb44;
+  }
+  button {
+    background: linear-gradient(90deg, #2b5876 40%, #4e4376 100%);
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.04em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 12px 0 0 0;
+    box-shadow: 0 2px 8px #2b587622;
+    transition: background 0.16s, transform 0.11s;
+  }
+  button:hover {
+    background: linear-gradient(90deg, #4e4376 10%, #2b5876 90%);
+    transform: translateY(-2px) scale(1.03);
+  }
+  textarea { min-height: 55px; }
+
+  /* Tabs */
+  .tabs-menu {
+    display: flex;
+    justify-content: center;
+    background: #fff6;
+    border-bottom: 2px solid #4e4376;
+    margin: 0 0 32px 0;
+    box-shadow: 0 2px 10px #2b587611;
+  }
+  .tab-btn {
+    appearance: none;
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1.13em;
+    font-weight: bold;
+    color: #4e4376;
+    padding: 13px 36px 10px 36px;
+    margin: 0 2px;
+    border-bottom: 3px solid transparent;
+    transition: background 0.16s, border 0.16s, color 0.16s;
+    border-radius: 8px 8px 0 0;
+  }
+  .tab-btn.active {
+    border-bottom: 3px solid #f9d423;
+    background: linear-gradient(90deg, #ffe082 60%, #ffd6e0 100%);
+    color: #d72660;
+    box-shadow: 0 2px 10px #d7266011;
+  }
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+
+  /* Tablas */
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px #4e43760a;
+    overflow: hidden;
+  }
+  th {
+    background: linear-gradient(90deg, #ffd6e0 50%, #ffe082 100%);
+    color: #4e4376;
+    font-size: 1.08em;
+    font-weight: bold;
+    padding: 11px 7px;
+    border-bottom: 2.5px solid #f9d423;
+    text-align: left;
+  }
+  td {
+    padding: 10px 7px;
+    border-bottom: 1.5px solid #f3e5f5;
+    font-size: 1.03em;
+    background: #fffbe6;
+    color: #333;
+  }
+  tr:last-child td {
+    border-bottom: none;
+  }
+  tr:nth-child(even) td {
+    background: #ffe5ec;
+  }
+  tr:hover td {
+    background: #f9d42333;
+  }
+
+  /* Fila de producto y venta */
+  .fila-producto, .fila-venta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 13px;
+    margin-bottom: 18px;
+    border: 1.5px solid #ffd6e0;
+    padding: 13px 13px 8px 13px;
+    border-radius: 12px;
+    background: #fff8f0;
+    box-shadow: 0 2px 7px #ffd6e033;
+    transition: box-shadow 0.13s;
+  }
+  .fila-producto button, .fila-venta button {
+    flex: 0 0 auto;
+    align-self: center;
+    height: 34px;
+    margin-top: 18px;
+    background: linear-gradient(90deg, #f9d423 60%, #d72660 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .fila-producto button:hover, .fila-venta button:hover {
+    background: linear-gradient(90deg, #d72660 60%, #f9d423 100%);
+  }
+  .campo-fila {
+    flex: 1 1 140px;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+  }
+  .campo-fila label {
+    font-weight: bold;
+    font-size: 0.93em;
+    margin-bottom: 3px;
+    color: #d72660;
+  }
+
+  /* Calculos y resumenes */
+  #calculos-en-vivo, #ventas-totales {
+    background: linear-gradient(90deg, #ffe082 80%, #ffd6e0 100%);
+    padding: 14px 18px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #ffe08255;
+    margin-top: 15px;
+    color: #4e4376;
+    font-weight: 600;
+    width: 340px;
+    border: 1px solid #ffd6e0;
+  }
+  #ventas-totales label, #calculos-en-vivo label {
+    color: #d72660;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+
+  /* Scroll y errores */
+  #buscar-ventas-resultados, #resultados-inventario {
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1.5px solid #ffd6e0;
+    border-radius: 7px;
+    background: #fffbe6;
+    padding: 10px;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px #ffd6e022;
+  }
+  .error {
+    color: #d72660;
+    font-weight: bold;
+    font-size: 1.08em;
+    padding-left: 5px;
+  }
+
+  /* Responsive */
+  @media (max-width: 1050px) {
+    section { padding: 14px 6vw; }
+    h1 { font-size: 2em; }
+    .tabs-menu { flex-direction: column; }
+    input, select, button, textarea { width: 98%; }
+    #calculos-en-vivo, #ventas-totales { width: 98%; }
+  }
+  @media (max-width: 600px) {
+    section { padding: 6vw 2vw; }
+    .campo-fila { min-width: 100px; }
+    table, th, td { font-size: 0.95em; }
+    h1 { font-size: 1.15em; }
+  }
+</style>
+<!-- Marquesina superior -->
+<div class="marquee"><span>🚀 ¡Bienvenido a Servicios EM! | Gestiona tu inventario y ventas con facilidad y estilo. | 💡 Tip: Puedes buscar productos tanto por nombre como por código. | 📞 Soporte: soporte@serviciosem.com</span></div>
+
+</head>
+<body>
+
+<h1>Servicios EM - Inventario y Ventas</h1>
+
+<!-- Tabs menu -->
+<div class="tabs-menu">
+  <button class="tab-btn active" onclick="showTab('inventario')">Inventario y Proveedores</button>
+  <button class="tab-btn" onclick="showTab('ventas')">Ventas y Clientes</button>
+  <button class="tab-btn" onclick="showTab('finanzas')">Finanzas</button>
+  <button class="tab-btn" onclick="showTab('cobros')">Cobros</button>
+  <button class="tab-btn" onclick="showTab('reportes')">Reportes</button> <!-- <-- NUEVO -->
+</div>
+
+<!-- TAB 1: INVENTARIO/PROVEEDORES -->
+<div id="tab-inventario" class="tab-section active">
+  <!-- Sub-tabs menú para Inventario y Proveedores -->
+  <div class="sub-tabs-menu" id="sub-tabs-inventario">
+    <button class="sub-tab-btn active" onclick="showSubTab('inventario', 'proveedor', event)">Proveedor</button>
+    <button class="sub-tab-btn" onclick="showSubTab('inventario', 'registro', event)">Registro Inventario</button>
+    <button class="sub-tab-btn" onclick="showSubTab('inventario', 'buscar', event)">Buscar Inventario</button>
+    <button class="sub-tab-btn" onclick="showSubTab('inventario', 'recibo', event)">Buscar Recibo</button>
+    <button class="sub-tab-btn" onclick="showSubTab('inventario', 'stock', event)">Stock</button>
+  </div>
+
+  <!-- Sección Proveedor -->
+  <div class="sub-tab-section-inventario active" id="sub-tab-inventario-proveedor">
+    <section>
+      <h2>Proveedor</h2>
+      <label for="select-proveedor">Selecciona un proveedor existente:</label>
+      <select id="select-proveedor">
+        <option value="">-- Seleccionar proveedor --</option>
+      </select>
+      <p>O si no existe, ingresa nuevo proveedor:</p>
+      <label for="proveedor-nombre">Nombre:</label>
+      <input type="text" id="proveedor-nombre" placeholder="Nombre proveedor" />
+      <label for="proveedor-correo">Correo:</label>
+      <input type="email" id="proveedor-correo" placeholder="Correo proveedor" />
+      <label for="proveedor-direccion">Dirección:</label>
+      <textarea id="proveedor-direccion" rows="2" placeholder="Dirección proveedor"></textarea>
+      <label for="proveedor-telefono">Teléfono:</label>
+      <input type="text" id="proveedor-telefono" placeholder="Teléfono proveedor" />
+      <button onclick="registrarProveedor()">Registrar Proveedor Nuevo</button>
+      <p id="proveedor-mensaje"></p>
+    </section>
+  </div>
+
+  <!-- Sección Registro Inventario -->
+  <div class="sub-tab-section-inventario" id="sub-tab-inventario-registro">
+    <section>
+      <h2>Registro de Inventario - Varios Productos</h2>
+      <label for="select-proveedor-inventario">Selecciona el proveedor para todos los productos:</label>
+      <select id="select-proveedor-inventario">
+        <option value="">-- Seleccionar proveedor --</option>
+      </select>
+      <div id="contenedor-filas-productos"></div>
+      <button onclick="agregarFilaProducto()">Agregar Producto</button>
+      <div id="calculos-en-vivo">
+        <strong>Cálculos en vivo (suma total de todos los productos):</strong><br/>
+        Subtotal: <span id="calc-subtotal">0.00</span><br/>
+        ITBMS total: <span id="calc-itbms">0.00</span><br/>
+        Descuento total: <span id="calc-descuento">0.00</span><br/>
+        Total: <span id="calc-total">0.00</span><br/>
+        <label for="abono-general">Abono:</label>
+        <input type="number" id="abono-general" min="0" step="0.01" value="0" oninput="actualizarSaldoPendiente()" />
+        <label for="forma-pago-general">Forma de pago:</label>
+        <select id="forma-pago-general">
+          <option value="Efectivo">Efectivo</option>
+          <option value="Tarjeta">Tarjeta</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="Crédito">Crédito</option>
+        </select><br/>
+        Saldo pendiente: <span id="calc-saldo">0.00</span><br/>
+      </div>
+      <button style="margin-top:10px;" onclick="registrarInventarioMultiples()">Registrar / Actualizar Inventario</button>
+      <p id="inventario-mensaje"></p>
+      <p id="inventario-ultimo-recibo" style="font-weight:bold;color:#2186eb;"></p>
+    </section>
+  </div>
+
+  <!-- Sección Buscar Inventario -->
+  <div class="sub-tab-section-inventario" id="sub-tab-inventario-buscar">
+    <section>
+      <h2>Buscar Inventario</h2>
+      <input type="text" id="buscar-inventario" placeholder="Buscar producto por nombre o código" style="width: 300px;" />
+      <button onclick="buscarInventario()">Buscar</button>
+      <div id="resultados-inventario" style="margin-top: 10px;"></div>
+    </section>
+  </div>
+
+  <!-- Sección Buscar Recibo -->
+  <div class="sub-tab-section-inventario" id="sub-tab-inventario-recibo">
+    <section>
+      <h2>Buscar Recibo de Inventario por Número</h2>
+      <label for="buscar-num-recibo">Escribe el número de recibo:</label>
+      <input type="number" id="buscar-num-recibo" placeholder="Ejemplo: 1005" style="width: 300px;" />
+      <button onclick="buscarReciboInventarioPorNumero()">Buscar</button>
+      <div id="buscar-inventario-numrecibo-resultados"></div>
+    </section>
+  </div>
+
+  <!-- Sección Stock -->
+  <div class="sub-tab-section-inventario" id="sub-tab-inventario-stock">
+    <section>
+      <h2>Productos en Stock</h2>
+      <div id="tabla-stock"></div>
+    </section>
+  </div>
+
+  <!-- Estilos para los sub-tabs -->
+  <style>
+    .sub-tabs-menu {
+      display: flex;
+      justify-content: center;
+      margin: 0 0 24px 0;
+      gap: 5px;
+      background: #fff4;
+      border-radius: 12px;
+      padding: 6px 0 2px 0;
+    }
+    .sub-tab-btn {
+      appearance: none;
+      border: none;
+      background: none;
+      padding: 10px 22px;
+      margin: 0 2px;
+      font-size: 1em;
+      font-weight: bold;
+      color: #4e4376;
+      border-radius: 8px 8px 0 0;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: background 0.12s, border 0.12s, color 0.12s;
+    }
+    .sub-tab-btn.active {
+      background: linear-gradient(90deg, #ffd6e0 60%, #ffe082 100%);
+      border-bottom: 3px solid #f9d423;
+      color: #d72660;
+      box-shadow: 0 2px 10px #d7266011;
+    }
+    .sub-tab-section-inventario { display: none; }
+    .sub-tab-section-inventario.active { display: block; }
+  </style>
+
+  <!-- Script para manejar los sub-tabs -->
+  <script>
+    function showSubTab(tab, sub, event) {
+      // tab: 'inventario'
+      // sub: el nombre corto de la sub-sección
+      document.querySelectorAll('.sub-tab-section-' + tab).forEach(div => div.classList.remove('active'));
+      document.getElementById('sub-tab-' + tab + '-' + sub).classList.add('active');
+
+      // Manejar los botones activos
+      document.querySelectorAll('#sub-tabs-' + tab + ' .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (event && event.target) event.target.classList.add('active');
+    }
+  </script>
+</div>
+<!-- TAB 2: VENTAS/CLIENTES -->
+<div id="tab-ventas" class="tab-section">
+  <!-- Sub-tabs menú para Ventas y Clientes -->
+  <div class="sub-tabs-menu" id="sub-tabs-ventas">
+    <button class="sub-tab-btn active" onclick="showSubTab('ventas', 'cliente', event)">Cliente</button>
+    <button class="sub-tab-btn" onclick="showSubTab('ventas', 'venta', event)">Agregar Venta</button>
+    <button class="sub-tab-btn" onclick="showSubTab('ventas', 'buscar', event)">Buscar Ventas (Cliente)</button>
+    <button class="sub-tab-btn" onclick="showSubTab('ventas', 'factura', event)">Buscar por Factura</button>
+  </div>
+
+  <!-- Sección Cliente -->
+  <div class="sub-tab-section-ventas active" id="sub-tab-ventas-cliente">
+    <section>
+      <h2>Cliente para la venta</h2>
+      <label for="select-cliente">Selecciona cliente existente:</label>
+      <select id="select-cliente">
+        <option value="">-- Seleccionar cliente --</option>
+      </select>
+      <p>O ingresa nuevo cliente:</p>
+      <label for="cliente-nombre">Nombre:</label>
+      <input type="text" id="cliente-nombre" placeholder="Nombre cliente" />
+      <label for="cliente-correo">Correo:</label>
+      <input type="email" id="cliente-correo" placeholder="Correo cliente" />
+      <label for="cliente-direccion">Dirección:</label>
+      <textarea id="cliente-direccion" rows="2" placeholder="Dirección cliente"></textarea>
+      <label for="cliente-telefono">Teléfono:</label>
+      <input type="text" id="cliente-telefono" placeholder="Teléfono cliente" />
+      <button onclick="registrarCliente()">Registrar Cliente Nuevo</button>
+      <p id="cliente-mensaje"></p>
+    </section>
+  </div>
+
+  <!-- Sección Agregar Venta -->
+  <div class="sub-tab-section-ventas" id="sub-tab-ventas-venta">
+    <section>
+      <h2>Agregar Productos a la Venta</h2>
+      <!-- ======= Campo para seleccionar cliente EXISTENTE en esta venta ======= -->
+      <div style="margin-bottom: 16px;">
+        <label for="select-cliente-venta"><b>Cliente:</b></label>
+        <select id="select-cliente-venta" required>
+          <option value="">-- Seleccionar cliente --</option>
+          <!-- Opciones se llenan dinámicamente -->
+        </select>
+      </div>
+      <div id="contenedor-filas-ventas"></div>
+      <button onclick="agregarFilaVenta()">Agregar Producto a la Venta</button>
+      <div id="totales-venta" style="margin-top:12px;">
+        <strong>Totales de la venta:</strong><br/>
+        Subtotal: <span id="venta-subtotal">0.00</span><br/>
+        Descuento total: <span id="venta-descuento">0.00</span><br/>
+        ITBMS total: <span id="venta-itbms">0.00</span><br/>
+        Total: <span id="venta-total">0.00</span><br/>
+        <label for="abono">Abono:</label>
+        <input type="number" id="abono" min="0" step="0.01" value="0" />
+        <label for="forma-pago">Forma de pago:</label>
+        <select id="forma-pago">
+          <option value="Efectivo">Efectivo</option>
+          <option value="Tarjeta">Tarjeta</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="Crédito">Crédito</option>
+        </select>
+        <label for="saldo-pendiente">Saldo pendiente:</label>
+        <input type="number" id="saldo-pendiente" readonly value="0" />
+      </div>
+      <button style="margin-top:10px;" onclick="registrarVenta()">Registrar Venta</button>
+      <p id="venta-mensaje"></p>
+      <p id="ventas-ultima-factura" style="font-weight:bold;color:#2186eb;"></p>
+    </section>
+  </div>
+
+  <!-- Sección Buscar Ventas por Cliente -->
+  <div class="sub-tab-section-ventas" id="sub-tab-ventas-buscar">
+    <section>
+      <h2>Buscar Ventas por Nombre de Cliente</h2>
+      <label for="buscar-nombre-ventas">Buscar por nombre de cliente:</label>
+      <input type="text" id="buscar-nombre-ventas" placeholder="Ejemplo: Juan" style="width: 300px;" />
+      <button onclick="buscarVentas()">Buscar</button>
+      <div id="buscar-ventas-resultados"></div>
+    </section>
+  </div>
+
+  <!-- Sección Buscar por Factura -->
+  <div class="sub-tab-section-ventas" id="sub-tab-ventas-factura">
+    <section>
+      <h2>Buscar por Número de Factura</h2>
+      <label for="buscar-num-factura">Número de factura:</label>
+      <input type="number" id="buscar-num-factura" placeholder="Ejemplo: 205" style="width: 300px;" />
+      <button onclick="buscarVentaPorNumeroFactura()">Buscar</button>
+      <div id="buscar-ventas-numfactura-resultados"></div>
+    </section>
+  </div>
+
+  <!-- Estilos para los sub-tabs de ventas -->
+  <style>
+    .sub-tabs-menu {
+      display: flex;
+      justify-content: center;
+      margin: 0 0 24px 0;
+      gap: 5px;
+      background: #fff4;
+      border-radius: 12px;
+      padding: 6px 0 2px 0;
+    }
+    .sub-tab-btn {
+      appearance: none;
+      border: none;
+      background: none;
+      padding: 10px 22px;
+      margin: 0 2px;
+      font-size: 1em;
+      font-weight: bold;
+      color: #4e4376;
+      border-radius: 8px 8px 0 0;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: background 0.12s, border 0.12s, color 0.12s;
+    }
+    .sub-tab-btn.active {
+      background: linear-gradient(90deg, #ffd6e0 60%, #ffe082 100%);
+      border-bottom: 3px solid #f9d423;
+      color: #d72660;
+      box-shadow: 0 2px 10px #d7266011;
+    }
+    .sub-tab-section-ventas { display: none; }
+    .sub-tab-section-ventas.active { display: block; }
+  </style>
+
+  <!-- Script para manejar los sub-tabs de ventas -->
+  <script>
+    function showSubTab(tab, sub, event) {
+      document.querySelectorAll('.sub-tab-section-' + tab).forEach(div => div.classList.remove('active'));
+      document.getElementById('sub-tab-' + tab + '-' + sub).classList.add('active');
+      document.querySelectorAll('#sub-tabs-' + tab + ' .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (event && event.target) event.target.classList.add('active');
+    }
+  </script>
+</div>
+<!-- === TAB 3: FINANZAS === -->
+<div id="tab-finanzas" class="tab-section">
+  <div id="finanzas-tabs-menu" class="sub-tabs-menu">
+    <button class="sub-tab-btn active" onclick="showFinanzasTab('gastos', event)">Gastos</button>
+    <button class="sub-tab-btn" onclick="showFinanzasTab('ingresos', event)">Ingresos</button>
+    <button class="sub-tab-btn" onclick="showFinanzasTab('prestamos', event)">Préstamos</button>
+  </div>
+  <!-- ====== GASTOS ====== -->
+  <div class="finanzas-tab-section active" id="finanzas-gastos">
+    <section>
+      <h2>Registrar Gasto</h2>
+      <form id="form-gasto" onsubmit="registrarGasto(event)">
+        <label for="gasto-categoria">Categoría:</label>
+        <input type="text" id="gasto-categoria" required />
+
+        <label for="gasto-descripcion">Descripción:</label>
+        <input type="text" id="gasto-descripcion" required />
+
+        <label for="gasto-fecha">Fecha:</label>
+        <input type="datetime-local" id="gasto-fecha" required />
+
+        <label for="gasto-formapago">Forma de Pago:</label>
+        <input type="text" id="gasto-formapago" required />
+
+        <label for="gasto-monto">Monto:</label>
+        <input type="number" id="gasto-monto" min="0" step="0.01" required />
+
+        <label for="gasto-notas">Notas:</label>
+        <input type="text" id="gasto-notas" />
+
+        <label for="gasto-proveedorgasto">Proveedor:</label>
+        <input type="text" id="gasto-proveedorgasto" />
+
+        <label for="gasto-referencia">Referencia:</label>
+        <input type="text" id="gasto-referencia" />
+
+        <label for="gasto-usuarioquegasta">Usuario que gasta:</label>
+        <input type="text" id="gasto-usuarioquegasta" required />
+
+        <button type="submit">Registrar Gasto</button>
+      </form>
+      <p id="gasto-mensaje"></p>
+    </section>
+
+    <section>
+      <h2>Buscar Gastos</h2>
+      <input type="number" id="buscar-numero-gasto" placeholder="Buscar por Nº de Gasto" style="width:150px;">
+      <button onclick="buscarGastoPorNumero()">Buscar por número</button>
+      <div id="resultados-gastos"></div>
+    </section>
+  </div>
+
+  <!-- ====== INGRESOS ====== -->
+  <div class="finanzas-tab-section" id="finanzas-ingresos">
+    <section>
+      <h2>Registrar Ingreso</h2>
+      <form id="form-ingreso" onsubmit="registrarIngreso(event)">
+        <label for="ingreso-categoria">Categoría:</label>
+        <input type="text" id="ingreso-categoria" required />
+
+        <label for="ingreso-descripcion">Descripción:</label>
+        <input type="text" id="ingreso-descripcion" required />
+
+        <label for="ingreso-fecha">Fecha:</label>
+        <input type="datetime-local" id="ingreso-fecha" required />
+
+        <label for="ingreso-formapago">Forma de Pago:</label>
+        <input type="text" id="ingreso-formapago" required />
+
+        <label for="ingreso-fuenteingreso">Fuente de Ingreso:</label>
+        <input type="text" id="ingreso-fuenteingreso" required />
+
+        <label for="ingreso-monto">Monto:</label>
+        <input type="number" id="ingreso-monto" min="0" step="0.01" required />
+
+        <label for="ingreso-notas">Notas:</label>
+        <input type="text" id="ingreso-notas" />
+
+        <label for="ingreso-referencia">Referencia:</label>
+        <input type="text" id="ingreso-referencia" />
+
+        <label for="ingreso-usuarioqueregistraingreso">Usuario que registra:</label>
+        <input type="text" id="ingreso-usuarioqueregistraingreso" required />
+
+        <button type="submit">Registrar Ingreso</button>
+      </form>
+      <p id="ingreso-mensaje"></p>
+    </section>
+
+    <section>
+      <h2>Buscar Ingresos</h2>
+      <input type="number" id="buscar-numero-ingreso" placeholder="Buscar por Nº de Ingreso" style="width:150px;">
+      <button onclick="buscarIngresoPorNumero()">Buscar por número</button>
+      <div id="resultados-ingresos"></div>
+    </section>
+  </div>
+</div>
+<!-- ====== PRÉSTAMOS (DENTRO DE FINANZAS) ====== -->
+<div class="finanzas-tab-section" id="finanzas-prestamos" style="display:none;">
+  <div id="prestamos-tabs-menu" class="sub-tabs-menu">
+    <button class="sub-tab-btn active" onclick="showPrestamosTab('registro', event)">Registrar Préstamo</button>
+    <button class="sub-tab-btn" onclick="showPrestamosTab('busqueda', event)">Buscar Préstamos</button>
+  </div>
+  <!-- REGISTRO -->
+   <div class="prestamos-tab-section" id="prestamos-registro" style="display:block;">
+      <section>
+      <h2>Registrar Préstamo</h2>
+      <p id="proximo-numero-prestamo" style="font-weight:bold;color:#2186eb;"></p>
+      <form id="form-prestamo" onsubmit="registrarPrestamo(event)">
+        <label for="prestamo-tipo">Tipo:</label>
+        <select id="prestamo-tipo" required>
+          <option value="">-- Selecciona --</option>
+          <option value="prestado">Prestado (yo presto)</option>
+          <option value="recibido">Recibido (yo recibo)</option>
+        </select>
+        <label for="prestamo-acreedor">Acreedor:</label>
+        <input type="text" id="prestamo-acreedor" required placeholder="Quién presta (si recibo) o yo (si presto)" />
+        <label for="prestamo-deudor">Deudor:</label>
+        <input type="text" id="prestamo-deudor" required placeholder="Quién debe (si presto) o yo (si recibo)" />
+        <label for="prestamo-monto">Monto:</label>
+        <input type="number" id="prestamo-monto" min="0" step="0.01" required />
+        <label for="prestamo-interes">Interés mensual (%):</label>
+        <input type="number" id="prestamo-interes" value="0" min="0" step="0.01" required />
+        <label for="prestamo-fechaentrega">Fecha de Entrega:</label>
+        <input type="datetime-local" id="prestamo-fechaentrega" required />
+        <label for="prestamo-fechavencimiento">Fecha de Vencimiento:</label>
+        <input type="datetime-local" id="prestamo-fechavencimiento" required />
+        <label for="prestamo-formapago">Forma de Pago:</label>
+        <input type="text" id="prestamo-formapago" required />
+        <label for="prestamo-abono">Abono Inicial:</label>
+        <input type="number" id="prestamo-abono" min="0" step="0.01" value="0" required />
+        <label for="prestamo-estado">Estado:</label>
+        <select id="prestamo-estado" required>
+          <option value="pendiente">Pendiente</option>
+          <option value="pagado">Pagado</option>
+          <option value="parcial">Parcial</option>
+        </select>
+        <label for="prestamo-concepto">Concepto:</label>
+        <input type="text" id="prestamo-concepto" required />
+        <label for="prestamo-notas">Notas:</label>
+        <input type="text" id="prestamo-notas" />
+        <label for="prestamo-personaqueregistro">Usuario que registra:</label>
+        <input type="text" id="prestamo-personaqueregistro" required />
+        <button type="submit">Registrar Préstamo</button>
+      </form>
+      <p id="prestamo-mensaje"></p>
+    </section>
+  </div>
+  <!-- BUSQUEDA -->
+  <div class="prestamos-tab-section" id="prestamos-busqueda" style="display:none;">
+    <section>
+      <h2>Buscar Préstamos</h2>
+      <div>
+        <input type="text" id="buscar-prestamos" placeholder="Por concepto, persona, estado, etc." style="width:220px;" />
+        <button onclick="buscarPrestamos()">Buscar</button>
+      </div>
+      <div style="margin-top:8px;">
+        <input type="number" id="buscar-numero-prestamo" placeholder="Buscar por Nº de Préstamo" style="width:180px;">
+        <button onclick="buscarPrestamoPorNumero()">Buscar por número</button>
+      </div>
+      <div id="resultados-prestamos"></div>
+    </section>
+  </div>
+</div>
+<!-- TAB 4: COBROS -->
+<div id="tab-cobros" class="tab-section">
+  <div class="sub-tabs-menu" id="sub-tabs-cobros">
+    <button class="sub-tab-btn active" onclick="showSubTab('cobros', 'porcobrar', event)">Cuentas por Cobrar (Ventas)</button>
+    <button class="sub-tab-btn" onclick="showSubTab('cobros', 'porpagar', event)">Cuentas por Pagar (Inventario)</button>
+    <button class="sub-tab-btn" onclick="showSubTab('cobros', 'prestamos', event)">Préstamos</button>
+  </div>
+  <!-- Subtab: Cuentas por Cobrar -->
+  <div class="sub-tab-section-cobros active" id="sub-tab-cobros-porcobrar">
+    <section>
+      <h2>Cuentas por Cobrar (Ventas al Crédito)</h2>
+      <button onclick="listarCuentasPorCobrar()">Actualizar lista</button>
+      <div id="cobros-por-cobrar-lista"></div>
+    </section>
+  </div>
+  <!-- Subtab: Cuentas por Pagar -->
+  <div class="sub-tab-section-cobros" id="sub-tab-cobros-porpagar">
+    <section>
+      <h2>Cuentas por Pagar (Compras al Crédito)</h2>
+      <button onclick="listarCuentasPorPagar()">Actualizar lista</button>
+      <div id="cobros-por-pagar-lista"></div>
+    </section>
+  </div>
+  <!-- Subtab: Préstamos -->
+  <div class="sub-tab-section-cobros" id="sub-tab-cobros-prestamos">
+    <section>
+      <h2>Préstamos por Cobrar y por Pagar</h2>
+      <button onclick="listarPrestamosCobros()">Actualizar lista</button>
+      <div id="cobros-prestamos-lista"></div>
+    </section>
+  </div>
+  <style>
+    .sub-tabs-menu {
+      display: flex;
+      justify-content: center;
+      margin: 0 0 24px 0;
+      gap: 5px;
+      background: #fff4;
+      border-radius: 12px;
+      padding: 6px 0 2px 0;
+    }
+    .sub-tab-btn {
+      appearance: none;
+      border: none;
+      background: none;
+      padding: 10px 22px;
+      margin: 0 2px;
+      font-size: 1em;
+      font-weight: bold;
+      color: #4e4376;
+      border-radius: 8px 8px 0 0;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: background 0.12s, border 0.12s, color 0.12s;
+    }
+    .sub-tab-btn.active {
+      background: linear-gradient(90deg, #ffd6e0 60%, #ffe082 100%);
+      border-bottom: 3px solid #f9d423;
+      color: #d72660;
+      box-shadow: 0 2px 10px #d7266011;
+    }
+    .sub-tab-section-cobros { display: none; }
+    .sub-tab-section-cobros.active { display: block; }
+  </style>
+  <script>
+    // Sub-tabs para Cobros
+    function showSubTab(tab, sub, event) {
+      document.querySelectorAll('.sub-tab-section-' + tab).forEach(div => div.classList.remove('active'));
+      document.getElementById('sub-tab-' + tab + '-' + sub).classList.add('active');
+      document.querySelectorAll('#sub-tabs-' + tab + ' .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (event && event.target) event.target.classList.add('active');
+    }
+  </script>
+</div>
+<!-- TAB REPORTES -->
+<div id="tab-reportes" class="tab-section">
+  <div class="sub-tabs-menu" id="sub-tabs-reportes">
+    <button class="sub-tab-btn active" onclick="showReporteTab('diario', event)">Reporte Diario</button>
+    <button class="sub-tab-btn" onclick="showReporteTab('total', event)">Reporte Total</button>
+  </div>
+  <div id="reporte-contenido"></div>
+</div>
+<style>
+  .finanzas-tab-section { display: none; }
+  .finanzas-tab-section.active { display: block; }
+</style>
+<script>
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', 
+      (tab === 'inventario' && i === 0) ||
+      (tab === 'ventas' && i === 1) ||
+      (tab === 'finanzas' && i === 2) ||
+      (tab === 'cobros' && i === 3) ||
+      (tab === 'reportes' && i === 4)
+    );
+  });
+  document.getElementById('tab-inventario').classList.toggle('active', tab==='inventario');
+  document.getElementById('tab-ventas').classList.toggle('active', tab==='ventas');
+  document.getElementById('tab-finanzas').classList.toggle('active', tab==='finanzas');
+  document.getElementById('tab-cobros').classList.toggle('active', tab==='cobros');
+  document.getElementById('tab-reportes').classList.toggle('active', tab==='reportes');
+  // Muestra reporte diario por defecto al entrar
+  if(tab === 'reportes') showReporteTab('diario');
+}
+function showFinanzasTab(tab, event) {
+  document.querySelectorAll('.finanzas-tab-section').forEach(div => div.style.display = 'none');
+  document.querySelectorAll('#finanzas-tabs-menu .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+  var activeSection = document.getElementById('finanzas-' + tab);
+  if (activeSection) activeSection.style.display = 'block';
+  if(event && event.target) event.target.classList.add('active');
+  if(tab === 'prestamos') mostrarProximoNumeroPrestamo();
+}
+
+
+// Mostrar próximo número de factura
+async function mostrarUltimoNumeroFactura() {
+  const snap = await db.collection('ventas').orderBy('numeroFactura', 'desc').limit(1).get();
+  let num = snap.empty ? 1 : (snap.docs[0].data().numeroFactura || 1);
+  document.getElementById('ventas-ultima-factura').textContent = "Próximo número de factura: " + (num + 1);
+}
+
+// Mostrar próximo número de recibo
+async function mostrarUltimoNumeroRecibo() {
+  const snap = await db.collection('inventario').orderBy('numeroRecibo', 'desc').limit(1).get();
+  let num = snap.empty ? 1 : (snap.docs[0].data().numeroRecibo || 1);
+  document.getElementById('inventario-ultimo-recibo').textContent = "Próximo número de recibo: " + (num + 1);
+}
+function showReporteTab(tipo, event) {
+  document.querySelectorAll('#sub-tabs-reportes .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+  cargarReporte(tipo);
+}
+async function cargarReporte(tipo) {
+  const div = document.getElementById('reporte-contenido');
+  div.innerHTML = '<em>Cargando reporte...</em>';
+
+  // --- Ajuste para zona horaria de Panamá UTC-5 ---
+  const ahora = new Date();
+  const PANAMA_OFFSET = -5;
+  // Hoy a las 00:00:00 en Panamá
+  const hoy = new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate(), 0, 0, 0));
+  hoy.setHours(hoy.getHours() + PANAMA_OFFSET);
+
+  // Función para comparar fecha Firestore con hoy en UTC-5
+  const esDeHoy = (fechaFS) => {
+    if (!fechaFS) return false;
+    const f = fechaFS.seconds ? new Date(fechaFS.seconds * 1000) : new Date(fechaFS);
+    f.setHours(f.getHours() + PANAMA_OFFSET);
+    return (
+      f.getFullYear() === hoy.getFullYear() &&
+      f.getMonth() === hoy.getMonth() &&
+      f.getDate() === hoy.getDate()
+    );
+  };
+
+  // --- Cargar TODO el stock a memoria (clave: codigo) ---
+  let stockSnap = await db.collection('stock').get();
+  let stockMap = {};
+  stockSnap.forEach(doc => {
+    const s = doc.data();
+    if (s.codigo) stockMap[s.codigo] = s;
+  });
+
+  // --- Procesa ventas ---
+  let ventasSnap = await db.collection('ventas').get();
+  let totalVentas = 0, totalAbonos = 0, totalSaldo = 0, nVentas = 0;
+  let totalCostoVendida = 0, gananciaBruta = 0;
+  ventasSnap.forEach(doc => {
+    let v = doc.data();
+    if (tipo === 'diario' && !esDeHoy(v.fecha)) return;
+    nVentas++;
+    totalVentas += v.total || 0;
+    totalAbonos += v.abono || 0;
+    totalSaldo += (v.saldoPendiente != null ? v.saldoPendiente : (v.total || 0) - (v.abono || 0));
+    if (Array.isArray(v.productos)) {
+      v.productos.forEach(p => {
+        let codigo = p.codigo;
+        let cantidad = p.cantidad || 0;
+        let precioVenta = p.precio_unitario || 0;
+        // Busca costo promedio en stock
+        let stockProd = stockMap[codigo];
+        let costoPromedio = stockProd ? (stockProd.costo_promedio || stockProd.costo_unitario || 0) : 0;
+        let costoTotal = costoPromedio * cantidad;
+        let ventaTotal = precioVenta * cantidad;
+        totalCostoVendida += costoTotal;
+        gananciaBruta += (ventaTotal - costoTotal);
+      });
+    }
+  });
+
+  // --- Ingresos extras ---
+  let ingresosSnap = await db.collection('ingresos').get();
+  let totalIngresos = 0, nIngresos = 0;
+  ingresosSnap.forEach(doc => {
+    let i = doc.data();
+    if (tipo === 'diario' && !esDeHoy(i.fecha)) return;
+    nIngresos++;
+    totalIngresos += i.monto || 0;
+  });
+
+  // --- Gastos ---
+  let gastosSnap = await db.collection('gastos').get();
+  let totalGastos = 0, nGastos = 0;
+  gastosSnap.forEach(doc => {
+    let g = doc.data();
+    if (tipo === 'diario' && !esDeHoy(g.fecha)) return;
+    nGastos++;
+    totalGastos += g.monto || 0;
+  });
+
+  // --- Préstamos ---
+  let prestamosSnap = await db.collection('prestamos').get();
+  let totalPrestamosPendientes = 0;
+  prestamosSnap.forEach(doc => {
+    let p = doc.data();
+    if (tipo === 'diario' && p.fechaentrega && !esDeHoy(p.fechaentrega)) return;
+    totalPrestamosPendientes += p.saldopendiente || 0;
+  });
+
+  // --- Inventario comprado y compras diarias/históricas (CORREGIDO) ---
+  let inventarioSnap = await db.collection('inventario').get();
+  let comprasDiarias = 0, comprasTotales = 0, nInventarioHoy = 0, nInventario = 0;
+
+inventarioSnap.forEach(doc => {
+  let inv = doc.data();
+  let fecha = inv.fecha_actualizacion;
+  let esHoy = fecha && esDeHoy(fecha);
+  let compraDocumento = 0;
+
+  if (Array.isArray(inv.productos)) {
+    inv.productos.forEach(p => {
+      if (typeof p.costo_unitario === 'number' && typeof p.stock_inicial === 'number') {
+        compraDocumento += p.costo_unitario * p.stock_inicial;
+      }
+    });
+  }
+
+  comprasTotales += compraDocumento;
+  if (esHoy) {
+    comprasDiarias += compraDocumento;
+    nInventarioHoy++;
+  }
+  nInventario++;
+});
+
+  // --- Stock actual y ganancia potencial ---
+  let stockActualValorCosto = 0, stockActualValorVenta = 0, stockGananciaPotencial = 0, nStock = 0;
+  Object.values(stockMap).forEach(s => {
+    if (typeof s.cantidad === 'number' && s.cantidad > 0) {
+      let costo = typeof s.costo_promedio === 'number' ? s.costo_promedio : (typeof s.costo_unitario === 'number' ? s.costo_unitario : 0);
+      let precio = typeof s.precio_unitario === 'number' ? s.precio_unitario : 0;
+      stockActualValorCosto += s.cantidad * costo;
+      stockActualValorVenta += s.cantidad * precio;
+      stockGananciaPotencial += s.cantidad * (precio - costo);
+      nStock++;
+    }
+  });
+
+  // --- GANANCIA NETA ---
+  let gananciaNeta = gananciaBruta - totalGastos;
+
+  // --- Render HTML ---
+  div.innerHTML = `
+    <div class="reporte-block">
+      <h2>Reporte ${tipo === 'diario' ? 'Diario' : 'Total'} del Negocio</h2>
+      <ul>
+        <li><b>Total Ventas:</b> $${totalVentas.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nVentas} ventas)</span></li>
+        <li><b>Total Ingresos extra:</b> $${totalIngresos.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nIngresos} ingresos)</span></li>
+        <li><b>Total Gastos:</b> $${totalGastos.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nGastos} gastos)</span></li>
+        <li><b>Total Abonos recibidos ventas:</b> $${totalAbonos.toFixed(2)}</li>
+        <li><b>Total saldo pendiente de cobro (ventas):</b> $${totalSaldo.toFixed(2)}</li>
+        <li><b>Total de préstamos pendientes:</b> $${totalPrestamosPendientes.toFixed(2)}</li>
+        <li><b>Costo de mercancía vendida:</b> $${totalCostoVendida.toFixed(2)}</li>
+        <li class="${gananciaNeta >= 0 ? 'ganancia' : 'perdida'}"><b>Ganancia Neta:</b> $${gananciaNeta.toFixed(2)}</li>
+        <li class="${gananciaBruta >= 0 ? 'ganancia' : 'perdida'}"><b>Ganancia Bruta:</b> $${gananciaBruta.toFixed(2)}</li>
+      </ul>
+      <hr>
+      <ul>
+        ${
+          tipo === 'diario'
+            ? `<li><b>Compras realizadas hoy (inventario):</b> $${comprasDiarias.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nInventarioHoy} movimientos hoy)</span></li>`
+            : `<li><b>Compras totales (inventario):</b> $${comprasTotales.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nInventario} movimientos históricos)</span></li>`
+        }
+        <li><b>Stock Actual (valor costo):</b> $${stockActualValorCosto.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nStock} productos)</span></li>
+        <li><b>Stock Actual (valor venta):</b> $${stockActualValorVenta.toFixed(2)}</li>
+        <li><b>Ganancia Potencial si vendes todo el stock:</b> $${stockGananciaPotencial.toFixed(2)}</li>
+      </ul>
+    </div>
+  `;
+}
+// --- PROVEEDORES/INVENTARIO ---
+async function cargarProveedores() {
+  const selects = [
+    document.getElementById('select-proveedor'),
+    document.getElementById('select-proveedor-inventario')
+  ];
+  for (const select of selects) {
+    select.innerHTML = '<option value="">-- Seleccionar proveedor --</option>';
+  }
+
+  try {
+    const res = await fetch("https://us-central1-servicios-em.cloudfunctions.net/obtenerProveedores");
+    const data = await res.json();
+
+    if (!data.proveedores || data.proveedores.length === 0) {
+      console.warn("No hay proveedores registrados.");
+      return;
+    }
+
+    data.proveedores.forEach(p => {
+      selects.forEach(select => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = p.nombre;
+        select.appendChild(option);
+      });
+    });
+
+  } catch (error) {
+    console.error("Error cargando proveedores:", error);
+  }
+}
+
+async function registrarProveedor() {
+  const nombre = document.getElementById("proveedor-nombre").value.trim();
+  const correo = document.getElementById("proveedor-correo").value.trim();
+  const direccion = document.getElementById("proveedor-direccion").value.trim();
+  const telefono = document.getElementById("proveedor-telefono").value.trim();
+  const msg = document.getElementById("proveedor-mensaje");
+
+  msg.textContent = "";
+
+  if (!nombre || !correo || !direccion || !telefono) {
+    msg.textContent = "Por favor, completa todos los campos de proveedor";
+    msg.className = "error";
+    return;
+  }
+
+  try {
+    const res = await fetch("https://registrarproveedor-foue72b53a-uc.a.run.app", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, correo, direccion, telefono }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      msg.textContent = data.mensaje;
+      msg.className = "";
+      limpiarCamposProveedor();
+      await cargarProveedores(); // Actualiza el select
+    } else {
+      msg.textContent = data.error || "Error desconocido";
+      msg.className = "error";
+    }
+  } catch (error) {
+    console.error("Error al registrar proveedor:", error);
+    msg.textContent = "Error de red o del servidor";
+    msg.className = "error";
+  }
+}
+
+
+function limpiarCamposProveedor() {
+  document.getElementById('proveedor-nombre').value = '';
+  document.getElementById('proveedor-correo').value = '';
+  document.getElementById('proveedor-direccion').value = '';
+  document.getElementById('proveedor-telefono').value = '';
+}
+function agregarFilaProducto() {
+  const contenedor = document.getElementById('contenedor-filas-productos');
+  const fila = document.createElement('div');
+  fila.className = 'fila-producto';
+  fila.innerHTML = `
+    <div class="campo-fila"><label>Producto</label><input type="text" class="producto" placeholder="Producto" autocomplete="off" /></div>
+    <div class="campo-fila"><label>Categoría</label><input type="text" class="categoria" placeholder="Categoría" /></div>
+    <div class="campo-fila"><label>Código</label><input type="text" class="codigo" placeholder="codigo" autocomplete="off" /></div>
+    <div class="campo-fila"><label>Costo Unitario</label><input type="number" step="0.01" class="costo_unitario" placeholder="Costo Unitario" /></div>
+    <div class="campo-fila"><label>Precio Unitario</label><input type="number" step="0.01" class="precio_unitario" placeholder="Precio Unitario" /></div>
+    <div class="campo-fila"><label>Descuento (%)</label><input type="number" step="0.01" class="descuento" placeholder="Descuento (%)" value="0"/></div>
+    <div class="campo-fila"><label>ITBMS (%)</label><input type="number" step="0.01" class="itbms" placeholder="ITBMS (%)" value="0"/></div>
+    <div class="campo-fila"><label>Stock Inicial</label><input type="number" class="stock_inicial" placeholder="Stock Inicial" value="0"/></div>
+    <div class="campo-fila"><label>Tipo</label><input type="text" class="tipo" placeholder="Tipo" /></div>
+    <div class="campo-fila"><label>Unidad</label><input type="text" class="unidad" placeholder="Unidad" /></div>
+    <button type="button" onclick="eliminarFilaProducto(this)">Eliminar</button>
+  `;
+  contenedor.appendChild(fila);
+  agregarEventosFila(fila);
+  agregarAutorelleno(fila);
+}
+function eliminarFilaProducto(btn) {
+  const fila = btn.parentElement;
+  fila.remove();
+  actualizarCalculosEnVivo();
+}
+
+// INTEGRADO: Cambia la lógica de actualización de stock aquí
+async function actualizarStock(productoLower, cantidadNueva, datosProducto) {
+  try {
+    // Busca el documento stock
+    const stockDocQuery = await db.collection('stock').where('productoLower', '==', productoLower).limit(1).get();
+    if (!stockDocQuery.empty) {
+      // Si existe, suma la cantidad
+      const docRef = stockDocQuery.docs[0].ref;
+      const stockActual = stockDocQuery.docs[0].data().cantidad || 0;
+      await docRef.update({
+        cantidad: stockActual + cantidadNueva,
+        // Actualiza otros datos relevantes si lo deseas
+        categoria: datosProducto.categoria || '',
+        codigo: datosProducto.codigo || '',
+        costo_promedio: datosProducto.costo_unitario || 0,
+        descuento: datosProducto.descuento || 0,
+        itbms: datosProducto.itbms || 0,
+        precio_unitario: datosProducto.precio_unitario || 0,
+        tipo: datosProducto.tipo || '',
+        unidad: datosProducto.unidad || '',
+        stock: cantidadNueva,
+        fecha_actualizacion: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      // Si no existe, crea el documento stock
+      await db.collection('stock').add({
+        producto: datosProducto.producto,
+        productoLower,
+        categoria: datosProducto.categoria || '',
+        codigo: datosProducto.codigo || '',
+        costo_promedio: datosProducto.costo_unitario || 0,
+        descuento: datosProducto.descuento || 0,
+        itbms: datosProducto.itbms || 0,
+        precio_unitario: datosProducto.precio_unitario || 0,
+        tipo: datosProducto.tipo || '',
+        unidad: datosProducto.unidad || '',
+        cantidad: cantidadNueva,
+        stock: cantidadNueva,
+        fecha_actualizacion: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    cargarStock();
+  } catch (error) {
+    console.error('Error actualizando stock:', error);
+  }
+}
+// === NUMERO DE RECIBO AUTOMÁTICO (INVENTARIO) ===
+async function obtenerNuevoNumeroReciboInventario() {
+  // Busca el último número de recibo y suma uno
+  const snap = await db.collection('inventario').orderBy('numeroRecibo', 'desc').limit(1).get();
+  let ultimo = 0;
+  if (!snap.empty && snap.docs[0].data().numeroRecibo) {
+    ultimo = snap.docs[0].data().numeroRecibo;
+  }
+  return ultimo + 1;
+}
+// Cambia el registro de inventario para pasar los datos correctos a actualizarStock
+async function registrarInventarioMultiples() {
+  const proveedorSelect = document.getElementById('select-proveedor-inventario');
+  const proveedorId = proveedorSelect.value;
+  const proveedorNombre = proveedorSelect.selectedOptions[0]?.text || '';
+  const msg = document.getElementById('inventario-mensaje');
+
+  msg.textContent = '';
+  msg.className = '';
+
+  if (!proveedorId) {
+    msg.textContent = 'Por favor, selecciona un proveedor para los productos';
+    msg.className = 'error';
+    return;
+  }
+
+  const filas = document.querySelectorAll('#contenedor-filas-productos .fila-producto');
+  if (filas.length === 0) {
+    msg.textContent = 'Agrega al menos un producto para registrar';
+    msg.className = 'error';
+    return;
+  }
+
+  const productos = [];
+  let datosInvalidos = false;
+
+  for (const fila of filas) {
+    const producto = fila.querySelector('input.producto').value.trim();
+    const categoria = fila.querySelector('input.categoria').value.trim();
+    const codigo = fila.querySelector('input.codigo').value.trim();
+    const costo_unitario = parseFloat(fila.querySelector('input.costo_unitario').value);
+    const precio_unitario = parseFloat(fila.querySelector('input.precio_unitario').value);
+    const descuento = parseFloat(fila.querySelector('input.descuento').value);
+    const itbms = parseFloat(fila.querySelector('input.itbms').value);
+    const stock_inicial = parseInt(fila.querySelector('input.stock_inicial').value);
+    const tipo = fila.querySelector('input.tipo').value.trim();
+    const unidad = fila.querySelector('input.unidad').value.trim();
+
+    if (!producto || !categoria || !codigo || isNaN(costo_unitario) || isNaN(precio_unitario) || isNaN(descuento) || isNaN(itbms) || isNaN(stock_inicial) || !tipo || !unidad) {
+      datosInvalidos = true;
+      break;
+    }
+
+    productos.push({ producto, categoria, codigo, costo_unitario, precio_unitario, descuento, itbms, stock_inicial, tipo, unidad });
+  }
+
+  if (datosInvalidos) {
+    msg.textContent = 'Error en algunos datos. Revisa e intenta de nuevo.';
+    msg.className = 'error';
+    return;
+  }
+
+  const abono = parseFloat(document.getElementById('abono-general').value) || 0;
+  const formaPago = document.getElementById('forma-pago-general').value;
+
+  try {
+    const res = await fetch("https://registrarinventario-foue72b53a-uc.a.run.app", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proveedorId, proveedorNombre, productos, abono, formaPago })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      msg.textContent = data.mensaje;
+      limpiarFilasProductos();
+      cargarStock();
+      actualizarCalculosEnVivo();
+      document.getElementById('inventario-ultimo-recibo').textContent = "Último recibo registrado: " + data.numeroRecibo;
+      mostrarUltimoNumeroRecibo();
+    } else {
+      msg.textContent = data.error || "Error en el servidor";
+      msg.className = "error";
+    }
+  } catch (error) {
+    console.error("Error al registrar inventario:", error);
+    msg.textContent = "Error de red o del servidor";
+    msg.className = "error";
+  }
+}
+
+function limpiarFilasProductos() {
+  const contenedor = document.getElementById('contenedor-filas-productos');
+  contenedor.innerHTML = '';
+  agregarFilaProducto(); // Añade una fila vacía después de limpiar
+}
+async function cargarStock() {
+  const divStock = document.getElementById('tabla-stock');
+  divStock.innerHTML = '<p>Cargando stock...</p>';
+
+  try {
+    const res = await fetch("https://obtenerstock-foue72b53a-uc.a.run.app");
+    const data = await res.json();
+
+    if (!data.productos || data.productos.length === 0) {
+      divStock.innerHTML = '<p>No hay productos en stock.</p>';
+      return;
+    }
+
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Categoría</th>
+          <th>Tipo</th>
+          <th>Unidad</th>
+          <th>Cantidad</th>
+          <th>Precio Unitario</th>
+          <th>ITBMS (%)</th>
+          <th>Descuento (%)</th>
+        </tr>
+      </thead><tbody>`;
+
+    data.productos.forEach(d => {
+      html += `<tr>
+        <td>${d.producto || ''}</td>
+        <td>${d.codigo || ''}</td>
+        <td>${d.categoria || ''}</td>
+        <td>${d.tipo || ''}</td>
+        <td>${d.unidad || ''}</td>
+        <td>${d.cantidad ?? 0}</td>
+        <td>${(d.precio_unitario ?? 0).toFixed(2)}</td>
+        <td>${(d.itbms ?? 0).toFixed(2)}</td>
+        <td>${(d.descuento ?? 0).toFixed(2)}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    divStock.innerHTML = html;
+
+  } catch (e) {
+    console.error('Error al cargar stock:', e);
+    divStock.innerHTML = '<p>Error cargando stock.</p>';
+  }
+}
+async function buscarInventario() {
+  const busqueda = document.getElementById('buscar-inventario').value.trim().toLowerCase();
+  const divResultados = document.getElementById('resultados-inventario');
+  divResultados.innerHTML = '<p>Buscando...</p>';
+
+  if (!busqueda) {
+    divResultados.innerHTML = '<p>Ingresa texto para buscar.</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://buscarinventario-foue72b53a-uc.a.run.app?q=${encodeURIComponent(busqueda)}`);
+    const data = await res.json();
+
+    if (!data.resultados || data.resultados.length === 0) {
+      divResultados.innerHTML = '<p>No se encontraron resultados.</p>';
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr>
+        <th>Producto</th><th>Categoría</th><th>Código</th><th>Costo Unitario</th>
+        <th>Precio Unitario</th><th>Stock Inicial</th><th>Proveedor</th><th>Tipo</th><th>Unidad</th>
+        <th>ITBMS</th><th>Descuento</th><th>Abono</th><th>Subtotal</th><th>Forma de Pago</th>
+        <th>Saldo Pendiente</th><th>Fecha de Registro</th>
+      </tr></thead><tbody>`;
+
+    data.resultados.forEach(({ producto: p, recibo: d, fecha }) => {
+      const subtotal = typeof p.subtotal !== 'undefined'
+        ? p.subtotal
+        : (p.costo_unitario || 0) * (p.stock_inicial || 0);
+
+      const saldo = (typeof d.total === "number" && typeof d.abono === "number")
+        ? (d.total - d.abono).toFixed(2)
+        : "0.00";
+
+      html += `<tr>
+        <td>${p.producto || ''}</td><td>${p.categoria || ''}</td><td>${p.codigo || ''}</td>
+        <td>${p.costo_unitario?.toFixed(2) || '0.00'}</td><td>${p.precio_unitario?.toFixed(2) || '0.00'}</td>
+        <td>${p.stock_inicial || 0}</td><td>${d.proveedorNombre || ''}</td><td>${p.tipo || ''}</td>
+        <td>${p.unidad || ''}</td><td>${p.itbms?.toFixed(2) || '0.00'}</td><td>${p.descuento?.toFixed(2) || '0.00'}</td>
+        <td>${d.abono?.toFixed(2) || '0.00'}</td><td>${subtotal.toFixed(2)}</td><td>${d.formaPago || ''}</td>
+        <td>${saldo}</td><td>${new Date(fecha).toLocaleString()}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    divResultados.innerHTML = html;
+  } catch (error) {
+    console.error('Error en la búsqueda de inventario:', error);
+    divResultados.innerHTML = '<p class="error">Error en la búsqueda: ' + error.message + '</p>';
+  }
+}
+
+
+
+function agregarEventosFila(fila) {
+  const inputs = fila.querySelectorAll('input');
+  inputs.forEach(input => { input.addEventListener('input', actualizarCalculosEnVivo); });
+}
+
+function actualizarCalculosEnVivo() {
+    let subtotal = 0;
+    let itbmsTotal = 0;
+    let descuentoTotal = 0;
+    let total = 0;
+
+    const filas = document.querySelectorAll('#contenedor-filas-productos .fila-producto');
+
+    filas.forEach(fila => {
+        const costoUnitario = parseFloat(fila.querySelector('input.costo_unitario').value) || 0;
+        const stockInicial = parseInt(fila.querySelector('input.stock_inicial').value) || 0;
+        const descuentoPorcentaje = parseFloat(fila.querySelector('input.descuento').value) || 0;
+        const itbmsPorcentaje = parseFloat(fila.querySelector('input.itbms').value) || 0;
+
+        const productoSubtotal = costoUnitario * stockInicial;
+        const productoDescuento = productoSubtotal * (descuentoPorcentaje / 100);
+        const productoItbms = (productoSubtotal - productoDescuento) * (itbmsPorcentaje / 100);
+        const productoTotal = productoSubtotal - productoDescuento + productoItbms;
+
+        subtotal += productoSubtotal;
+        itbmsTotal += productoItbms;
+        descuentoTotal += productoDescuento;
+        total += productoTotal;
+    });
+
+    // Actualizar valores en el DOM
+    document.getElementById('calc-subtotal').textContent = subtotal.toFixed(2);
+    document.getElementById('calc-itbms').textContent = itbmsTotal.toFixed(2);
+    document.getElementById('calc-descuento').textContent = descuentoTotal.toFixed(2);
+    document.getElementById('calc-total').textContent = total.toFixed(2);
+
+    // Llamar a la función de saldo pendiente para actualizar
+    actualizarSaldoPendiente();
+}
+
+function actualizarSaldoPendiente() {
+    const total = parseFloat(document.getElementById('calc-total').textContent) || 0;
+    const abono = parseFloat(document.getElementById('abono-general').value) || 0;
+    const saldoPendiente = total - abono;
+
+    // Actualizar el saldo pendiente en el DOM
+    document.getElementById('calc-saldo').textContent = saldoPendiente.toFixed(2);
+
+}
+async function buscarReciboInventarioPorNumero() {
+  const numero = parseInt(document.getElementById("buscar-num-recibo").value.trim());
+  const div = document.getElementById("buscar-inventario-numrecibo-resultados");
+  div.innerHTML = "Buscando...";
+
+  if (isNaN(numero)) {
+    div.innerHTML = "<p class='error'>Ingresa un número válido.</p>";
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://us-central1-servicios-em.cloudfunctions.net/buscarReciboPorNumero?numero=${numero}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.recibo) {
+      div.innerHTML = "<p class='error'>Recibo no encontrado.</p>";
+      return;
+    }
+
+    const r = data.recibo;
+    const productos = Array.isArray(r.productos) ? r.productos : [r.productos];
+
+    let html = `<h3>Recibo #${r.numeroRecibo}</h3>
+    <p><strong>Proveedor:</strong> ${r.proveedorNombre}</p>
+    <p><strong>Forma de Pago:</strong> ${r.formaPago}</p>
+    <p><strong>Abono:</strong> $${(r.abono ?? 0).toFixed(2)}</p>
+    <p><strong>Total:</strong> $${(r.total ?? 0).toFixed(2)}</p>
+    <p><strong>Saldo Pendiente:</strong> $${(r.saldoPendiente ?? 0).toFixed(2)}</p>
+    <p><strong>Fecha:</strong> ${new Date(r.fecha).toLocaleString()}</p>`;
+
+    html += `<h4>Productos</h4>
+      <table><thead><tr>
+        <th>Producto</th><th>Código</th><th>Categoría</th><th>Tipo</th>
+        <th>Unidad</th><th>Stock Inicial</th><th>Costo</th><th>Precio</th>
+        <th>Descuento</th><th>ITBMS</th><th>Subtotal</th>
+      </tr></thead><tbody>`;
+
+    productos.forEach(p => {
+      html += `<tr>
+        <td>${p.producto || ''}</td>
+        <td>${p.codigo || ''}</td>
+        <td>${p.categoria || ''}</td>
+        <td>${p.tipo || ''}</td>
+        <td>${p.unidad || ''}</td>
+        <td>${p.stock_inicial ?? 0}</td>
+        <td>${(p.costo_unitario ?? 0).toFixed(2)}</td>
+        <td>${(p.precio_unitario ?? 0).toFixed(2)}</td>
+        <td>${(p.descuento ?? 0).toFixed(2)}</td>
+        <td>${(p.itbms ?? 0).toFixed(2)}</td>
+        <td>${(p.subtotal ?? ((p.costo_unitario || 0) * (p.stock_inicial || 0))).toFixed(2)}</td>
+      </tr>`;
+    });
+
+    html += "</tbody></table>";
+    div.innerHTML = html;
+
+  } catch (err) {
+    console.error("Error buscando recibo:", err);
+    div.innerHTML = "<p class='error'>Error en la búsqueda: " + err.message + "</p>";
+  }
+}
+
+// --- CLIENTES/VENTAS ---
+function agregarAutorelleno(fila) {
+  const inputProducto = fila.querySelector('input.producto');
+  const inputCodigo = fila.querySelector('input.codigo');
+
+  inputProducto.addEventListener('input', async () => {
+    const val = inputProducto.value.trim().toLowerCase();
+    if (!val) return;
+
+    try {
+      const res = await fetch(`https://us-central1-servicios-em.cloudfunctions.net/buscarProductoPorCodigo?producto=${encodeURIComponent(val)}`);
+      const data = await res.json();
+
+      if (res.ok && data.producto) {
+        rellenarFilaConDatos(fila, data.producto);
+      }
+    } catch (e) {
+      console.error('Error autorelleno producto inventario:', e);
+    }
+  });
+
+  inputCodigo.addEventListener('input', async () => {
+    const val = inputCodigo.value.trim();
+    if (!val) return;
+
+    try {
+      const res = await fetch(`https://us-central1-servicios-em.cloudfunctions.net/buscarProductoPorCodigo?codigo=${encodeURIComponent(val)}`);
+      const data = await res.json();
+
+      if (res.ok && data.producto) {
+        rellenarFilaConDatos(fila, data.producto);
+      }
+    } catch (e) {
+      console.error('Error autorelleno código inventario:', e);
+    }
+  });
+}
+
+
+function rellenarFilaConDatos(fila, data) {
+  if (fila.querySelector('input.producto')) fila.querySelector('input.producto').value = data.producto || '';
+  if (fila.querySelector('input.categoria')) fila.querySelector('input.categoria').value = data.categoria || '';
+  if (fila.querySelector('input.codigo')) fila.querySelector('input.codigo').value = data.codigo || '';
+  if (fila.querySelector('input.costo_unitario')) fila.querySelector('input.costo_unitario').value = data.costo_promedio ?? 0;
+  if (fila.querySelector('input.precio_unitario')) fila.querySelector('input.precio_unitario').value = data.precio_unitario ?? 0;
+  if (fila.querySelector('input.descuento')) fila.querySelector('input.descuento').value = data.descuento ?? 0;
+  if (fila.querySelector('input.itbms')) fila.querySelector('input.itbms').value = data.itbms ?? 0;
+  if (fila.querySelector('input.stock_inicial')) fila.querySelector('input.stock_inicial').value = '0';
+  if (fila.querySelector('input.tipo')) fila.querySelector('input.tipo').value = data.tipo || '';
+  if (fila.querySelector('input.unidad')) fila.querySelector('input.unidad').value = data.unidad || '';
+  if (typeof actualizarCalculosEnVivo === "function") actualizarCalculosEnVivo();
+}
+
+// Aquí está la integración para pedir fechas solo para Internet Starlink
+function agregarFilaVenta() {
+  const contenedor = document.getElementById('contenedor-filas-ventas');
+  const fila = document.createElement('div');
+  fila.className = 'fila-venta';
+  fila.innerHTML = `
+    <div class="campo-fila"><label>Producto (Nombre)</label><input type="text" class="producto" autocomplete="off" placeholder="Producto" /></div>
+    <div class="campo-fila"><label>Código</label><input type="text" class="codigo" autocomplete="off" placeholder="Código" /></div>
+    <div class="campo-fila"><label>Categoría</label><input type="text" class="categoria" readonly /></div>
+    <div class="campo-fila"><label>Tipo</label><input type="text" class="tipo" readonly /></div>
+    <div class="campo-fila"><label>Unidad</label><input type="text" class="unidad" readonly /></div>
+    <div class="campo-fila"><label>Cantidad</label><input type="number" class="cantidad" min="1" value="1" /></div>
+    <div class="campo-fila"><label>Precio Unitario</label><input type="number" class="precio_unitario" step="0.01" readonly /></div>
+    <div class="campo-fila"><label>Descuento (%)</label><input type="number" class="descuento" step="0.01" value="0" /></div>
+    <div class="campo-fila"><label>ITBMS (%)</label><input type="number" class="itbms" step="0.01" /></div>
+    <div class="campo-fila"><label>Subtotal</label><input type="number" class="subtotal" step="0.01" readonly /></div>
+    <!-- Campos especiales para Starlink, ocultos por defecto -->
+    <div class="campo-fila starlink-fechas" style="display:none;">
+      <label>Inicio (Fecha y Hora)</label>
+      <input type="datetime-local" class="starlink-inicio" />
+    </div>
+    <div class="campo-fila starlink-fechas" style="display:none;">
+      <label>Fin (Fecha y Hora)</label>
+      <input type="datetime-local" class="starlink-fin" />
+    </div>
+    <button type="button" onclick="eliminarFilaVenta(this)">Eliminar</button>
+  `;
+  contenedor.appendChild(fila);
+  agregarEventosVenta(fila);
+  agregarAutorellenoVenta(fila);
+  actualizarTotales();
+
+  // Evento para mostrar campos extra si es Starlink
+  fila.querySelector('input.producto').addEventListener('input', () => {
+    mostrarCamposStarlinkSiCorresponde(fila);
+  });
+}
+
+function mostrarCamposStarlinkSiCorresponde(fila) {
+  const prod = fila.querySelector('input.producto').value.trim().toLowerCase();
+  const starlinkFields = fila.querySelectorAll('.starlink-fechas');
+  if (prod.includes('starlink')) {
+    starlinkFields.forEach(f => f.style.display = '');
+  } else {
+    starlinkFields.forEach(f => f.style.display = 'none');
+  }
+}
+
+function eliminarFilaVenta(btn) {
+  btn.parentElement.remove();
+  actualizarTotales();
+}
+function agregarEventosVenta(fila) {
+  const inputs = fila.querySelectorAll('input.cantidad, input.descuento, input.itbms');
+  inputs.forEach(input => {
+    input.addEventListener('input', async () => {
+      // --- VALIDACIÓN DE STOCK EN TIEMPO REAL ---
+      const codigo = fila.querySelector('input.codigo').value.trim();
+      const producto = fila.querySelector('input.producto').value.trim();
+      const cantidadInput = fila.querySelector('input.cantidad');
+      const cantidad = parseInt(cantidadInput.value) || 0;
+      if (codigo && cantidad > 0) {
+        try {
+          const snapshot = await db.collection('stock').where('codigo', '==', codigo).limit(1).get();
+          if (!snapshot.empty) {
+            const stock = snapshot.docs[0].data();
+            if (cantidad > stock.cantidad) {
+              cantidadInput.value = stock.cantidad;
+              alert(`No puedes vender más de lo que hay en stock para "${stock.producto || producto}". Stock disponible: ${stock.cantidad}`);
+            }
+          }
+        } catch (e) {
+          console.error("Error consultando stock en tiempo real:", e);
+        }
+      }
+      // --- FIN VALIDACIÓN DE STOCK ---
+      actualizarSubtotalFila(fila);
+      actualizarTotales();
+    });
+  });
+}
+
+function actualizarSubtotalFila(fila) {
+  const precio = parseFloat(fila.querySelector('input.precio_unitario').value) || 0;
+  const cantidad = parseInt(fila.querySelector('input.cantidad').value) || 0;
+  const descuento = parseFloat(fila.querySelector('input.descuento').value) || 0;
+  const itbms = parseFloat(fila.querySelector('input.itbms').value) || 0;
+  let subtotal = precio * cantidad;
+  const descuentoMonto = subtotal * (descuento / 100);
+  const itbmsMonto = (subtotal - descuentoMonto) * (itbms / 100);
+  const total = subtotal - descuentoMonto + itbmsMonto;
+  fila.querySelector('input.subtotal').value = total.toFixed(2);
+}
+
+function actualizarTotales() {
+  const filas = document.querySelectorAll('#contenedor-filas-ventas .fila-venta');
+  let subtotalTotal = 0;
+  let descuentoTotal = 0;
+  let itbmsTotal = 0;
+  filas.forEach(fila => {
+    const precio = parseFloat(fila.querySelector('input.precio_unitario').value) || 0;
+    const cantidad = parseInt(fila.querySelector('input.cantidad').value) || 0;
+    const descuento = parseFloat(fila.querySelector('input.descuento').value) || 0;
+    const itbms = parseFloat(fila.querySelector('input.itbms').value) || 0;
+    let subtotal = precio * cantidad;
+    let descuentoMonto = subtotal * (descuento / 100);
+    let itbmsMonto = (subtotal - descuentoMonto) * (itbms / 100);
+    subtotalTotal += subtotal;
+    descuentoTotal += descuentoMonto;
+    itbmsTotal += itbmsMonto;
+  });
+  let total = subtotalTotal - descuentoTotal + itbmsTotal;
+  document.getElementById('venta-subtotal').textContent = subtotalTotal.toFixed(2);
+  document.getElementById('venta-descuento').textContent = descuentoTotal.toFixed(2);
+  document.getElementById('venta-itbms').textContent = itbmsTotal.toFixed(2);
+  document.getElementById('venta-total').textContent = total.toFixed(2);
+  const abono = parseFloat(document.getElementById('abono').value) || 0;
+  const saldo = total - abono;
+  document.getElementById('saldo-pendiente').value = saldo.toFixed(2);
+}
+
+document.getElementById('abono').addEventListener('input', () => { actualizarTotales(); });
+function agregarAutorellenoVenta(fila) {
+  const inputProducto = fila.querySelector('input.producto');
+  const inputCodigo = fila.querySelector('input.codigo');
+  inputProducto.addEventListener('input', async () => {
+    const val = inputProducto.value.trim().toLowerCase();
+    if (!val) return;
+    try {
+      const snapshot = await db.collection('stock').where('productoLower', '==', val).limit(1).get();
+      if (!snapshot.empty) rellenarFilaVenta(fila, snapshot.docs[0].data());
+    } catch (e) { console.error('Error autorelleno producto venta:', e); }
+  });
+  inputCodigo.addEventListener('input', async () => {
+    const val = inputCodigo.value.trim();
+    if (!val) return;
+    try {
+      const snapshot = await db.collection('stock').where('codigo', '==', val).limit(1).get();
+      if (!snapshot.empty) rellenarFilaVenta(fila, snapshot.docs[0].data());
+    } catch (e) { console.error('Error autorelleno código venta:', e); }
+  });
+}
+
+// Ajuste aquí: también mostrar los campos de fecha/hora si se autocompleta la fila
+function rellenarFilaVenta(fila, data) {
+  fila.querySelector('input.producto').value = data.producto || '';
+  fila.querySelector('input.codigo').value = data.codigo || '';
+  fila.querySelector('input.categoria').value = data.categoria || '';
+  fila.querySelector('input.tipo').value = data.tipo || '';
+  fila.querySelector('input.unidad').value = data.unidad || '';
+  fila.querySelector('input.precio_unitario').value = data.precio_unitario?.toFixed(2) || '0.00';
+  fila.querySelector('input.itbms').value = data.itbms?.toFixed(2) || '0.00';
+  fila.querySelector('input.descuento').value = data.descuento?.toFixed(2) || '0.00';
+  actualizarSubtotalFila(fila);
+  actualizarTotales();
+
+  // MOSTRAR los campos de fecha/hora si el producto es Starlink, ocultar si no
+  mostrarCamposStarlinkSiCorresponde(fila);
+}
+
+async function cargarClientes() {
+  const selects = [
+    document.getElementById('select-cliente'),
+    document.getElementById('select-cliente-venta')
+  ];
+  for (const select of selects) {
+    if (!select) continue;
+    select.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
+  }
+  try {
+    const snapshot = await db.collection('clientes').orderBy('nombre').get();
+    snapshot.forEach(doc => {
+      const c = doc.data();
+      for (const select of selects) {
+        if (!select) continue;
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = c.nombre;
+        select.appendChild(option);
+      }
+    });
+  } catch (error) {
+    console.error('Error cargando clientes:', error);
+  }
+}
+async function registrarCliente() {
+  const nombre = document.getElementById('cliente-nombre').value.trim();
+  const correo = document.getElementById('cliente-correo').value.trim();
+  const direccion = document.getElementById('cliente-direccion').value.trim();
+  const telefono = document.getElementById('cliente-telefono').value.trim();
+  const msg = document.getElementById('cliente-mensaje');
+  msg.textContent = '';
+  msg.className = '';
+  if (!nombre || !correo || !direccion || !telefono) {
+    msg.textContent = 'Completa todos los campos del cliente';
+    msg.className = 'error';
+    return;
+  }
+  try {
+    await db.collection('clientes').add({
+      nombre,
+      clienteLower: nombre.toLowerCase(),
+      correo,
+      direccion,
+      telefono,
+      fecha_registro: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    msg.textContent = 'Cliente registrado con éxito';
+    msg.className = '';
+    limpiarCamposCliente();
+    await cargarClientes();
+  } catch (e) {
+    msg.textContent = 'Error al registrar cliente: ' + e.message;
+    msg.className = 'error';
+  }
+}
+function limpiarCamposCliente() {
+  document.getElementById('cliente-nombre').value = '';
+  document.getElementById('cliente-correo').value = '';
+  document.getElementById('cliente-direccion').value = '';
+  document.getElementById('cliente-telefono').value = '';
+}
+// === NUMERO DE FACTURA AUTOMÁTICO ===
+async function obtenerNuevoNumeroFactura() {
+  // Busca el último número de factura y suma uno
+  const snap = await db.collection('ventas').orderBy('numeroFactura', 'desc').limit(1).get();
+  let ultimo = 0;
+  if (!snap.empty && snap.docs[0].data().numeroFactura) {
+    ultimo = snap.docs[0].data().numeroFactura;
+  }
+  return ultimo + 1;
+}
+async function registrarVenta() {
+  const clienteSelect = document.getElementById('select-cliente-venta');
+const clienteId = clienteSelect.value;
+const clienteNombre = clienteSelect.selectedOptions[0]?.textContent || '';
+  const formaPago = document.getElementById('forma-pago').value;
+  const abono = parseFloat(document.getElementById('abono').value) || 0;
+  const saldoPendiente = parseFloat(document.getElementById('saldo-pendiente').value) || 0;
+  const msg = document.getElementById('venta-mensaje');
+  msg.textContent = '';
+  msg.className = '';
+  if (!clienteId) {
+    msg.textContent = 'Selecciona un cliente para la venta';
+    msg.className = 'error';
+    return;
+  }
+  const filas = document.querySelectorAll('#contenedor-filas-ventas .fila-venta');
+  if (filas.length === 0) {
+    msg.textContent = 'Agrega al menos un producto a la venta';
+    msg.className = 'error';
+    return;
+  }
+  try {
+    const clienteDoc = await db.collection('clientes').doc(clienteId).get();
+    if (!clienteDoc.exists) {
+      msg.textContent = 'Cliente no encontrado';
+      msg.className = 'error';
+      return;
+    }
+    const clienteData = clienteDoc.data();
+    let productosVenta = [];
+    const batch = db.batch();
+    for (const fila of filas) {
+      const producto = fila.querySelector('input.producto').value.trim();
+      const codigo = fila.querySelector('input.codigo').value.trim();
+      const categoria = fila.querySelector('input.categoria').value.trim();
+      const tipo = fila.querySelector('input.tipo').value.trim();
+      const unidad = fila.querySelector('input.unidad').value.trim();
+      const cantidad = parseInt(fila.querySelector('input.cantidad').value) || 0;
+      const precio_unitario = parseFloat(fila.querySelector('input.precio_unitario').value) || 0;
+      const descuento = parseFloat(fila.querySelector('input.descuento').value) || 0;
+      const itbms = parseFloat(fila.querySelector('input.itbms').value) || 0;
+      const subtotal = parseFloat(fila.querySelector('input.subtotal').value) || 0;
+
+      // Solo para Internet Starlink, pide fechas y las guarda en el objeto
+      let starlink_inicio = null, starlink_fin = null;
+      if (producto.toLowerCase().includes('starlink')) {
+        starlink_inicio = fila.querySelector('input.starlink-inicio').value;
+        starlink_fin = fila.querySelector('input.starlink-fin').value;
+        if (!starlink_inicio || !starlink_fin) {
+          msg.textContent = 'Debes ingresar fecha y hora de inicio y fin para Internet Starlink.';
+          msg.className = 'error';
+          return;
+        }
+      }
+
+      // Stock y validación como siempre
+      if (cantidad <= 0) {
+        msg.textContent = `Cantidad inválida para el producto "${producto}"`;
+        msg.className = 'error';
+        return;
+      }
+      if (!producto) {
+        msg.textContent = 'Producto vacío en una fila';
+        msg.className = 'error';
+        return;
+      }
+      const stockQuery = await db.collection('stock').where('codigo', '==', codigo).limit(1).get();
+      if (stockQuery.empty) {
+        msg.textContent = `Producto "${producto}" con código "${codigo}" no existe en stock`;
+        msg.className = 'error';
+        return;
+      }
+      const stockDoc = stockQuery.docs[0];
+      const stockData = stockDoc.data();
+      if (stockData.cantidad < cantidad) {
+        msg.textContent = `No hay suficiente stock para "${producto}". Disponible: ${stockData.cantidad}, solicitado: ${cantidad}`;
+        msg.className = 'error';
+        return;
+      }
+
+      productosVenta.push({
+        producto, codigo, categoria, tipo, unidad, cantidad, precio_unitario, descuento, itbms, subtotal, stockId: stockDoc.id,
+        ...(starlink_inicio && { starlink_inicio }),
+        ...(starlink_fin && { starlink_fin })
+      });
+    }
+    const numeroFactura = await obtenerNuevoNumeroFactura();
+    const ventaRef = db.collection('ventas').doc();
+    const ventaData = {
+      numeroFactura,
+      clienteId,
+      clienteNombre: clienteData.nombre,
+      productos: productosVenta.map(p => { const copy = {...p}; delete copy.stockId; return copy; }),
+      subtotal: parseFloat(document.getElementById('venta-subtotal').textContent),
+      descuento: parseFloat(document.getElementById('venta-descuento').textContent),
+      itbms: parseFloat(document.getElementById('venta-itbms').textContent),
+      total: parseFloat(document.getElementById('venta-total').textContent),
+      formaPago,
+      abono,
+      saldoPendiente,
+      fecha: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    batch.set(ventaRef, ventaData);
+    productosVenta.forEach(p => {
+      const stockRef = db.collection('stock').doc(p.stockId);
+      batch.update(stockRef, {
+        cantidad: firebase.firestore.FieldValue.increment(-p.cantidad)
+      });
+    });
+    await batch.commit();
+    msg.textContent = 'Venta registrada correctamente y stock actualizado.';
+    msg.className = '';
+    limpiarFormularioVenta();
+    cargarStock();
+    cargarClientes();
+    document.getElementById('ventas-ultima-factura').textContent = "Última factura registrada: " + numeroFactura;
+    mostrarUltimoNumeroFactura();
+  } catch (e) {
+    msg.textContent = 'Error al registrar la venta: ' + e.message;
+    msg.className = 'error';
+    console.error(e);
+  }
+}
+function limpiarFormularioVenta() {
+  document.getElementById('select-cliente').value = '';
+  document.getElementById('contenedor-filas-ventas').innerHTML = '';
+  document.getElementById('venta-subtotal').textContent = '0.00';
+  document.getElementById('venta-descuento').textContent = '0.00';
+  document.getElementById('venta-itbms').textContent = '0.00';
+  document.getElementById('venta-total').textContent = '0.00';
+  document.getElementById('forma-pago').value = 'Efectivo';
+  document.getElementById('abono').value = 0;
+  document.getElementById('saldo-pendiente').value = 0;
+}
+async function buscarVentas() {
+  const nombreBusqueda = document.getElementById('buscar-nombre-ventas').value.trim().toLowerCase();
+  const resultadosDiv = document.getElementById('buscar-ventas-resultados');
+  resultadosDiv.innerHTML = '';
+  if (!nombreBusqueda) {
+    resultadosDiv.innerHTML = '<p>Escribe un nombre para buscar ventas.</p>';
+    return;
+  }
+  resultadosDiv.innerHTML = '<em>Buscando ventas...</em>';
+  try {
+    const ventasSnapshot = await db.collection('ventas').orderBy('fecha', 'desc').limit(100).get();
+    // Filtra ventas por nombre de cliente
+    const ventasFiltradas = ventasSnapshot.docs.filter(doc => {
+      const data = doc.data();
+      return data.clienteNombre && data.clienteNombre.toLowerCase().includes(nombreBusqueda);
+    });
+    if (ventasFiltradas.length === 0) {
+      resultadosDiv.innerHTML = '<p>No se encontraron ventas para ese nombre.</p>';
+      return;
+    }
+
+    // Tabla con productos individuales
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>Fecha venta</th>
+          <th>N° Factura</th>
+          <th>Cliente</th>
+          <th>Producto</th>
+          <th>Fecha/Hora inicio</th>
+          <th>Fecha/Hora fin</th>
+          <th>Código</th>
+          <th>Categoría</th>
+          <th>Tipo</th>
+          <th>Unidad</th>
+          <th>Cantidad</th>
+          <th>Precio Unitario</th>
+          <th>Descuento (%)</th>
+          <th>ITBMS (%)</th>
+          <th>Subtotal producto</th>
+          <th>Total venta</th>
+          <th>Forma de pago</th>
+          <th>Abono</th>
+          <th>Saldo pendiente</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    ventasFiltradas.forEach(doc => {
+      const v = doc.data();
+      const fechaVenta = v.fecha ? new Date(v.fecha.seconds * 1000).toLocaleString() : 'Sin fecha';
+      const totalVenta = v.total?.toFixed(2) ?? '0.00';
+      const formaPago = v.formaPago || '';
+      const abono = v.abono?.toFixed(2) ?? '0.00';
+      const saldoPendiente = v.saldoPendiente?.toFixed(2) ?? '0.00';
+
+      (v.productos || []).forEach(p => {
+        // Solo para Starlink mostramos inicio y fin, para otros vacío
+        let inicio = "", fin = "";
+        if (
+          (p.producto || "").toLowerCase().includes("starlink") &&
+          p.starlink_inicio && p.starlink_fin
+        ) {
+          inicio = p.starlink_inicio;
+          fin = p.starlink_fin;
+        }
+
+        // Calcular subtotal del producto si no existe
+        let subtotalProducto;
+        if (typeof p.subtotal !== "undefined") {
+          subtotalProducto = p.subtotal;
+        } else {
+          const cantidad = p.cantidad || 0;
+          const precio_unitario = p.precio_unitario || 0;
+          const descuento = p.descuento || 0;
+          const itbms = p.itbms || 0;
+          const base = cantidad * precio_unitario;
+          const montoDescuento = base * (descuento / 100);
+          const baseMenosDescuento = base - montoDescuento;
+          const montoItbms = baseMenosDescuento * (itbms / 100);
+          subtotalProducto = baseMenosDescuento + montoItbms;
+        }
+
+        html += `<tr>
+          <td>${fechaVenta}</td>
+          <td>${v.numeroFactura || ''}</td>
+          <td>${v.clienteNombre || ''}</td>
+          <td>${p.producto || ''}</td>
+          <td>${inicio}</td>
+          <td>${fin}</td>
+          <td>${p.codigo || ''}</td>
+          <td>${p.categoria || ''}</td>
+          <td>${p.tipo || ''}</td>
+          <td>${p.unidad || ''}</td>
+          <td>${p.cantidad || 0}</td>
+          <td>${p.precio_unitario?.toFixed(2) ?? '0.00'}</td>
+          <td>${p.descuento?.toFixed(2) ?? '0.00'}</td>
+          <td>${p.itbms?.toFixed(2) ?? '0.00'}</td>
+          <td>${subtotalProducto.toFixed(2)}</td>
+          <td>${totalVenta}</td>
+          <td>${formaPago}</td>
+          <td>${abono}</td>
+          <td>${saldoPendiente}</td>
+        </tr>`;
+      });
+    });
+
+    html += '</tbody></table>';
+    resultadosDiv.innerHTML = html;
+  } catch (e) {
+    resultadosDiv.innerHTML = '<p>Error al buscar ventas.</p>';
+    console.error(e);
+  }
+}
+// --- INICIALIZACIÓN ---
+window.onload = function() {
+  cargarProveedores();
+  cargarClientes();
+  cargarStock();
+  agregarFilaProducto();
+  agregarFilaVenta();
+  mostrarUltimoNumeroFactura();
+  mostrarUltimoNumeroRecibo();
+};
+// === BUSCAR POR NÚMERO DE FACTURA ===
+// === BUSCAR POR NÚMERO DE RECIBO (INVENTARIO) ===
+  async function buscarVentaPorNumeroFactura() {
+  const num = parseInt(document.getElementById('buscar-num-factura').value);
+  const resultadosDiv = document.getElementById('buscar-ventas-numfactura-resultados');
+  if (isNaN(num) || num <= 0) {
+    resultadosDiv.innerHTML = '<p>Ingresa un número de factura válido.</p>';
+    return;
+  }
+  resultadosDiv.innerHTML = '<em>Buscando...</em>';
+  try {
+    const snap = await db.collection('ventas').where('numeroFactura', '==', num).limit(5).get();
+    if (snap.empty) {
+      resultadosDiv.innerHTML = '<p>No se encontró ninguna venta con ese número.</p>';
+      return;
+    }
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>Factura</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Producto</th>
+          <th>Fecha/Hora inicio</th>
+          <th>Fecha/Hora fin</th>
+          <th>Código</th>
+          <th>Categoría</th>
+          <th>Tipo</th>
+          <th>Unidad</th>
+          <th>Cantidad</th>
+          <th>Precio Unit.</th>
+          <th>Descuento</th>
+          <th>ITBMS</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    let resumen = null;
+    snap.forEach(doc => {
+      const v = doc.data();
+      const fecha = v.fecha ? new Date(v.fecha.seconds*1000).toLocaleString() : '';
+      resumen = v;
+      (v.productos || []).forEach(p => {
+        // Solo para Starlink mostramos inicio y fin, para otros vacío
+        let inicio = "", fin = "";
+        if (
+          (p.producto || "").toLowerCase().includes("starlink") &&
+          p.starlink_inicio && p.starlink_fin
+        ) {
+          inicio = p.starlink_inicio; // Debe estar en formato fecha/hora
+          fin = p.starlink_fin;
+        }
+        html += `<tr>
+          <td>${v.numeroFactura}</td>
+          <td>${fecha}</td>
+          <td>${v.clienteNombre || ''}</td>
+          <td>${p.producto || ''}</td>
+          <td>${inicio}</td>
+          <td>${fin}</td>
+          <td>${p.codigo || ''}</td>
+          <td>${p.categoria || ''}</td>
+          <td>${p.tipo || ''}</td>
+          <td>${p.unidad || ''}</td>
+          <td>${p.cantidad || 0}</td>
+          <td>${p.precio_unitario?.toFixed(2) ?? '0.00'}</td>
+          <td>${p.descuento?.toFixed(2) ?? '0.00'}</td>
+          <td>${p.itbms?.toFixed(2) ?? '0.00'}</td>
+          <td>${p.subtotal?.toFixed(2) ?? '0.00'}</td>
+        </tr>`;
+      });
+    });
+    html += '</tbody></table>';
+
+    // Resumen igual que antes...
+    if (resumen) {
+      html += `<div style="margin-top:16px; padding:12px; background:#eef; border-radius:6px; width:fit-content;">
+        <b>Resumen de la factura:</b><br>
+        Subtotal: <b>${resumen.subtotal?.toFixed(2) ?? '0.00'}</b><br>
+        ITBMS: <b>${resumen.itbms?.toFixed(2) ?? '0.00'}</b><br>
+        Descuento: <b>${resumen.descuento?.toFixed(2) ?? '0.00'}</b><br>
+        Total: <b>${resumen.total?.toFixed(2) ?? '0.00'}</b><br>
+        Forma de pago: <b>${resumen.formaPago || ''}</b><br>
+        Abono: <b>${resumen.abono?.toFixed(2) ?? '0.00'}</b><br>
+        Saldo Pendiente: <b>${resumen.saldoPendiente?.toFixed(2) ?? '0.00'}</b>
+      </div>`;
+    }
+
+    resultadosDiv.innerHTML = html;
+  } catch (e) {
+    resultadosDiv.innerHTML = '<p>Error en la búsqueda.</p>';
+    console.error(e);
+  }
+}
+async function buscarReciboPorNumero() {
+  const num = parseInt(document.getElementById('buscar-num-recibo').value);
+  const resultadosDiv = document.getElementById('buscar-inventario-numrecibo-resultados');
+  if (isNaN(num) || num <= 0) {
+    resultadosDiv.innerHTML = '<p>Ingresa un número de recibo válido.</p>';
+    return;
+  }
+  resultadosDiv.innerHTML = '<em>Buscando...</em>';
+  try {
+    const snap = await db.collection('inventario').where('numeroRecibo', '==', num).limit(50).get();
+    if (snap.empty) {
+      resultadosDiv.innerHTML = '<p>No se encontró ningún recibo con ese número.</p>';
+      return;
+    }
+    
+    // Variables para el resumen global
+    let subtotal = 0, totalItbms = 0, totalDescuento = 0, total = 0;
+    let resumen = null, abonoRecibo = 0, formaPagoRecibo = "", proveedorRecibo = "";
+
+    let html = '';
+
+    // Encabezado único para todos los productos encontrados
+    html += `<table border="1" cellspacing="0" cellpadding="4">
+      <thead>
+        <tr>
+          <th>Recibo</th>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Categoría</th>
+          <th>Tipo</th>
+          <th>Unidad</th>
+          <th>Cantidad</th>
+          <th>Proveedor</th>
+          <th>Costo Unit.</th>
+          <th>Precio Unit.</th>
+          <th>ITBMS</th>
+          <th>Descuento</th>
+          <th>Abono</th>
+          <th>Subtotal</th>
+          <th>Forma de Pago</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+
+    snap.forEach(doc => {
+      const d = doc.data();
+      const fecha = d.fecha_actualizacion ? new Date(d.fecha_actualizacion.seconds * 1000).toLocaleString() : '';
+      resumen = d; // Para datos generales del recibo
+      abonoRecibo = d.abono || 0; // Solo una vez, del recibo
+      formaPagoRecibo = d.formaPago || '';
+      proveedorRecibo = d.proveedorNombre || '';
+
+      // Si el recibo tiene un arreglo de productos (nuevo formato)
+      if (Array.isArray(d.productos) && d.productos.length > 0) {
+  d.productos.forEach(producto => {
+    // Calcula los montos por producto
+    const cantidad = producto.stock_inicial || 0;
+    const costo_unitario = producto.costo_unitario || 0;
+    const descuento = producto.descuento || 0;
+    const itbms = producto.itbms || 0;
+    const productoSubtotal = costo_unitario * cantidad;
+    const productoDescuento = productoSubtotal * (descuento / 100);
+    const productoItbms = (productoSubtotal - productoDescuento) * (itbms / 100);
+    const productoTotal = productoSubtotal - productoDescuento + productoItbms;
+
+    subtotal += productoSubtotal;
+    totalDescuento += productoDescuento;
+    totalItbms += productoItbms;
+    total += productoTotal;
+
+    // SUBTOTAL POR PRODUCTO (usa el guardado o lo calcula)
+    const subtotalProducto = producto.subtotal !== undefined
+      ? producto.subtotal
+      : (costo_unitario * cantidad);
+
+    html += `
+      <tr>
+        <td>${d.numeroRecibo}</td>
+        <td>${fecha}</td>
+        <td>${producto.producto || ''}</td>
+        <td>${producto.codigo || ''}</td>
+        <td>${producto.categoria || ''}</td>
+        <td>${producto.tipo || ''}</td>
+        <td>${producto.unidad || ''}</td>
+        <td>${cantidad}</td>
+        <td>${d.proveedorNombre || ''}</td>
+        <td>${costo_unitario ? costo_unitario.toFixed(2) : '0.00'}</td>
+        <td>${producto.precio_unitario ? producto.precio_unitario.toFixed(2) : '0.00'}</td>
+        <td>${itbms ? itbms.toFixed(2) : '0.00'}</td>
+        <td>${descuento ? descuento.toFixed(2) : '0.00'}</td>
+        <td>${abonoRecibo.toFixed(2)}</td>
+        <td>${subtotalProducto.toFixed(2)}</td> <!-- Aquí va el subtotal por producto -->
+        <td>${producto.formaPago || d.formaPago || ''}</td>
+      </tr>
+    `;
+   });
+  } else {
+        // Si es el formato antiguo (un solo producto por doc)
+        const cantidad = d.stock_inicial || 0;
+        const costo_unitario = d.costo_unitario || 0;
+        const descuento = d.descuento || 0;
+        const itbms = d.itbms || 0;
+        const productoSubtotal = costo_unitario * cantidad;
+        const productoDescuento = productoSubtotal * (descuento / 100);
+        const productoItbms = (productoSubtotal - productoDescuento) * (itbms / 100);
+        const productoTotal = productoSubtotal - productoDescuento + productoItbms;
+
+        subtotal += productoSubtotal;
+        totalDescuento += productoDescuento;
+        totalItbms += productoItbms;
+        total += productoTotal;
+
+        html += `
+          <tr>
+            <td>${d.numeroRecibo}</td>
+            <td>${fecha}</td>
+            <td>${d.producto || ''}</td>
+            <td>${d.codigo || ''}</td>
+            <td>${d.categoria || ''}</td>
+            <td>${d.tipo || ''}</td>
+            <td>${d.unidad || ''}</td>
+            <td>${cantidad}</td>
+            <td>${d.proveedorNombre || ''}</td>
+            <td>${costo_unitario ? costo_unitario.toFixed(2) : '0.00'}</td>
+            <td>${d.precio_unitario ? d.precio_unitario.toFixed(2) : '0.00'}</td>
+            <td>${itbms ? itbms.toFixed(2) : '0.00'}</td>
+            <td>${descuento ? descuento.toFixed(2) : '0.00'}</td>
+            <td>${abonoRecibo.toFixed(2)}</td>
+            <td>${d.formaPago || ''}</td>
+          </tr>
+        `;
+      }
+    });
+
+    html += '</tbody></table>';
+
+    // Saldo pendiente calculado correctamente
+    const saldoPendiente = total - abonoRecibo;
+
+    // Resumen global debajo de la tabla
+    html += `<div style="margin-top:16px; padding:12px; background:#eef; border-radius:6px; width:fit-content;">
+      <b>Resumen del recibo:</b><br>
+      Subtotal: <b>${subtotal.toFixed(2)}</b><br>
+      ITBMS: <b>${totalItbms.toFixed(2)}</b><br>
+      Descuento: <b>${totalDescuento.toFixed(2)}</b><br>
+      <b>Total: ${total.toFixed(2)}</b><br>
+      Abono: <b>${abonoRecibo.toFixed(2)}</b><br>
+      Saldo Pendiente: <b>${saldoPendiente.toFixed(2)}</b><br>
+      Proveedor: <b>${proveedorRecibo}</b><br>
+      Forma de pago: <b>${formaPagoRecibo}</b><br>
+    </div>`;
+
+    resultadosDiv.innerHTML = html;
+  } catch (e) {
+    resultadosDiv.innerHTML = '<p>Error en la búsqueda.</p>';
+    console.error(e);
+  }
+}
+// === OBTENER NUEVO NÚMERO DE GASTO ===
+async function obtenerNuevoNumeroGasto() {
+  const snap = await db.collection('gastos').orderBy('numeroGasto', 'desc').limit(1).get();
+  let ultimo = 0;
+  if (!snap.empty && snap.docs[0].data().numeroGasto) {
+    ultimo = snap.docs[0].data().numeroGasto;
+  }
+  return ultimo + 1;
+}
+
+// === OBTENER NUEVO NÚMERO DE INGRESO ===
+async function obtenerNuevoNumeroIngreso() {
+  const snap = await db.collection('ingresos').orderBy('numeroIngreso', 'desc').limit(1).get();
+  let ultimo = 0;
+  if (!snap.empty && snap.docs[0].data().numeroIngreso) {
+    ultimo = snap.docs[0].data().numeroIngreso;
+  }
+  return ultimo + 1;
+}
+
+// Mostrar próximo número de gasto
+async function mostrarProximoNumeroGasto() {
+  const snap = await db.collection('gastos').orderBy('numeroGasto', 'desc').limit(1).get();
+  let num = snap.empty ? 1 : ((snap.docs[0].data().numeroGasto || 1) + 1);
+  const el = document.getElementById('proximo-numero-gasto');
+  if (el) el.textContent = "Próximo número de gasto: " + num;
+}
+
+// Mostrar próximo número de ingreso
+async function mostrarProximoNumeroIngreso() {
+  const snap = await db.collection('ingresos').orderBy('numeroIngreso', 'desc').limit(1).get();
+  let num = snap.empty ? 1 : ((snap.docs[0].data().numeroIngreso || 1) + 1);
+  const el = document.getElementById('proximo-numero-ingreso');
+  if (el) el.textContent = "Próximo número de ingreso: " + num;
+}
+
+// --- REGISTRAR GASTO ---
+async function registrarGasto(event) {
+  event.preventDefault();
+  const numeroGasto = await obtenerNuevoNumeroGasto();
+  const doc = {
+    numeroGasto,
+    categoria: document.getElementById('gasto-categoria').value,
+    descripcion: document.getElementById('gasto-descripcion').value,
+    fecha: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('gasto-fecha').value)),
+    formapago: document.getElementById('gasto-formapago').value,
+    monto: Number(document.getElementById('gasto-monto').value),
+    notas: document.getElementById('gasto-notas').value,
+    proveedorgasto: document.getElementById('gasto-proveedorgasto').value,
+    referencia: document.getElementById('gasto-referencia').value,
+    usuarioquegasta: document.getElementById('gasto-usuarioquegasta').value,
+    fecha_registro: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection("gastos").add(doc)
+    .then(() => {
+      document.getElementById('gasto-mensaje').textContent = '¡Gasto registrado! Número: ' + numeroGasto;
+      document.getElementById('form-gasto').reset();
+      mostrarProximoNumeroGasto();
+    })
+    .catch(e => {
+      document.getElementById('gasto-mensaje').textContent = "Error: " + e.message;
+    });
+}
+
+// --- REGISTRAR INGRESO ---
+async function registrarIngreso(event) {
+  event.preventDefault();
+  const numeroIngreso = await obtenerNuevoNumeroIngreso();
+  const doc = {
+    numeroIngreso,
+    categoria: document.getElementById('ingreso-categoria').value,
+    descripcion: document.getElementById('ingreso-descripcion').value,
+    fecha: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('ingreso-fecha').value)),
+    formapago: document.getElementById('ingreso-formapago').value,
+    fuenteingreso: document.getElementById('ingreso-fuenteingreso').value,
+    monto: Number(document.getElementById('ingreso-monto').value),
+    notas: document.getElementById('ingreso-notas').value,
+    referencia: document.getElementById('ingreso-referencia').value,
+    usuarioqueregistraingreso: document.getElementById('ingreso-usuarioqueregistraingreso').value,
+    fecha_registro: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection("ingresos").add(doc)
+    .then(() => {
+      document.getElementById('ingreso-mensaje').textContent = '¡Ingreso registrado! Número: ' + numeroIngreso;
+      document.getElementById('form-ingreso').reset();
+      mostrarProximoNumeroIngreso();
+    })
+    .catch(e => {
+      document.getElementById('ingreso-mensaje').textContent = "Error: " + e.message;
+    });
+}
+
+// --- BUSCAR GASTOS ---
+// --- BUSCAR GASTO POR NÚMERO ---
+async function buscarGastoPorNumero() {
+  const numero = parseInt(document.getElementById('buscar-numero-gasto').value);
+  const divResultados = document.getElementById('resultados-gastos');
+  if (isNaN(numero) || numero <= 0) {
+    divResultados.innerHTML = '<p>Ingresa un número de gasto válido.</p>';
+    return;
+  }
+  divResultados.innerHTML = '<p>Buscando...</p>';
+  try {
+    const snap = await db.collection('gastos').where('numeroGasto', '==', numero).limit(1).get();
+    if (snap.empty) {
+      divResultados.innerHTML = '<p>No se encontró ningún gasto con ese número.</p>';
+      return;
+    }
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Categoría</th>
+          <th>Descripción</th>
+          <th>Monto</th>
+          <th>Forma de Pago</th>
+          <th>Proveedor</th>
+          <th>Referencia</th>
+          <th>Usuario</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    snap.forEach(doc => {
+      const d = doc.data();
+      html += `<tr>
+        <td>${d.numeroGasto || ''}</td>
+        <td>${d.fecha ? new Date(d.fecha.seconds * 1000).toLocaleString() : ''}</td>
+        <td>${d.categoria || ''}</td>
+        <td>${d.descripcion || ''}</td>
+        <td>${d.monto?.toFixed(2) ?? ''}</td>
+        <td>${d.formapago || ''}</td>
+        <td>${d.proveedorgasto || ''}</td>
+        <td>${d.referencia || ''}</td>
+        <td>${d.usuarioquegasta || ''}</td>
+        <td>${d.notas || ''}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    divResultados.innerHTML = html;
+  } catch (e) {
+    divResultados.innerHTML = '<p>Error buscando gasto por número.</p>';
+    console.error(e);
+  }
+}
+
+// --- BUSCAR INGRESO POR NÚMERO ---
+async function buscarIngresoPorNumero() {
+  const numero = parseInt(document.getElementById('buscar-numero-ingreso').value);
+  const divResultados = document.getElementById('resultados-ingresos');
+  if (isNaN(numero) || numero <= 0) {
+    divResultados.innerHTML = '<p>Ingresa un número de ingreso válido.</p>';
+    return;
+  }
+  divResultados.innerHTML = '<p>Buscando...</p>';
+  try {
+    const snap = await db.collection('ingresos').where('numeroIngreso', '==', numero).limit(1).get();
+    if (snap.empty) {
+      divResultados.innerHTML = '<p>No se encontró ningún ingreso con ese número.</p>';
+      return;
+    }
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Categoría</th>
+          <th>Descripción</th>
+          <th>Monto</th>
+          <th>Forma de Pago</th>
+          <th>Fuente</th>
+          <th>Referencia</th>
+          <th>Usuario</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    snap.forEach(doc => {
+      const d = doc.data();
+      html += `<tr>
+        <td>${d.numeroIngreso || ''}</td>
+        <td>${d.fecha ? new Date(d.fecha.seconds * 1000).toLocaleString() : ''}</td>
+        <td>${d.categoria || ''}</td>
+        <td>${d.descripcion || ''}</td>
+        <td>${d.monto?.toFixed(2) ?? ''}</td>
+        <td>${d.formapago || ''}</td>
+        <td>${d.fuenteingreso || ''}</td>
+        <td>${d.referencia || ''}</td>
+        <td>${d.usuarioqueregistraingreso || ''}</td>
+        <td>${d.notas || ''}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    divResultados.innerHTML = html;
+  } catch (e) {
+    divResultados.innerHTML = '<p>Error buscando ingreso por número.</p>';
+    console.error(e);
+  }
+}
+// --- BUSCAR INGRESOS ---
+async function buscarIngresoPorNumero() {
+  const numero = parseInt(document.getElementById('buscar-numero-ingreso').value);
+  const divResultados = document.getElementById('resultados-ingresos');
+  if (isNaN(numero) || numero <= 0) {
+    divResultados.innerHTML = '<p>Ingresa un número de ingreso válido.</p>';
+    return;
+  }
+  divResultados.innerHTML = '<p>Buscando...</p>';
+  try {
+    const snap = await db.collection('ingresos').where('numeroIngreso', '==', numero).limit(1).get();
+    if (snap.empty) {
+      divResultados.innerHTML = '<p>No se encontró ningún ingreso con ese número.</p>';
+      return;
+    }
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Categoría</th>
+          <th>Descripción</th>
+          <th>Monto</th>
+          <th>Forma de Pago</th>
+          <th>Fuente</th>
+          <th>Referencia</th>
+          <th>Usuario</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    snap.forEach(doc => {
+      const d = doc.data();
+      html += `<tr>
+        <td>${d.numeroIngreso || ''}</td>
+        <td>${d.fecha ? new Date(d.fecha.seconds * 1000).toLocaleString() : ''}</td>
+        <td>${d.categoria || ''}</td>
+        <td>${d.descripcion || ''}</td>
+        <td>${d.monto?.toFixed(2) ?? ''}</td>
+        <td>${d.formapago || ''}</td>
+        <td>${d.fuenteingreso || ''}</td>
+        <td>${d.referencia || ''}</td>
+        <td>${d.usuarioqueregistraingreso || ''}</td>
+        <td>${d.notas || ''}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    divResultados.innerHTML = html;
+  } catch (e) {
+    divResultados.innerHTML = '<p>Error buscando ingreso por número.</p>';
+    console.error(e);
+  }
+}
+// ==== INICIALIZAR NÚMEROS EN WINDOW ONLOAD ====
+window.addEventListener('DOMContentLoaded', function() {
+  mostrarProximoNumeroGasto();
+  mostrarProximoNumeroIngreso();
+});
+// === OBTENER NUEVO NÚMERO DE PRÉSTAMO ===
+async function obtenerNuevoNumeroPrestamo() {
+  const snap = await db.collection('prestamos').orderBy('prestamonumero', 'desc').limit(1).get();
+  let ultimo = 0;
+  if (!snap.empty && snap.docs[0].data().prestamonumero) {
+    ultimo = snap.docs[0].data().prestamonumero;
+  }
+  return ultimo + 1;
+}
+
+// Mostrar próximo número de préstamo
+async function mostrarProximoNumeroPrestamo() {
+  const snap = await db.collection('prestamos').orderBy('prestamonumero', 'desc').limit(1).get();
+  let num = snap.empty ? 1 : ((snap.docs[0].data().prestamonumero || 1) + 1);
+  const el = document.getElementById('proximo-numero-prestamo');
+  if (el) el.textContent = "Próximo número de préstamo: " + num;
+}
+
+// --- REGISTRAR PRÉSTAMO ---
+async function registrarPrestamo(event) {
+  event.preventDefault();
+  const prestamonumero = await obtenerNuevoNumeroPrestamo();
+  const tipo = document.getElementById('prestamo-tipo').value;
+  const acreedor = document.getElementById('prestamo-acreedor').value;
+  const deudor = document.getElementById('prestamo-deudor').value;
+  const monto = Number(document.getElementById('prestamo-monto').value);
+  const interesPorc = Number(document.getElementById('prestamo-interes').value); // Ej: 2
+  const interesDecimal = interesPorc / 100; // Ej: 0.02
+  const fechaentrega = new Date(document.getElementById('prestamo-fechaentrega').value);
+  const fechavencimiento = new Date(document.getElementById('prestamo-fechavencimiento').value);
+  const formapago = document.getElementById('prestamo-formapago').value;
+  const abono = Number(document.getElementById('prestamo-abono').value);
+  const estado = document.getElementById('prestamo-estado').value;
+  const concepto = document.getElementById('prestamo-concepto').value;
+  const notas = document.getElementById('prestamo-notas').value;
+  const personaqueregistro = document.getElementById('prestamo-personaqueregistro').value;
+
+  // Calcular el total con interés mensual simple
+  const totalprestamo = monto + (monto * interesDecimal);
+  const saldopendiente = totalprestamo - abono;
+
+  const doc = {
+    prestamonumero,
+    tipo,
+    acreedor,
+    deudor,
+    monto,
+    interes: interesPorc + '%',
+    totalprestamo: Number(totalprestamo.toFixed(2)),
+    saldopendiente: Number(saldopendiente.toFixed(2)),
+    fechaentrega: firebase.firestore.Timestamp.fromDate(fechaentrega),
+    fechavencimiento: firebase.firestore.Timestamp.fromDate(fechavencimiento),
+    formapago,
+    abono,
+    estado,
+    concepto,
+    notas,
+    personaqueregistro,
+    fecharegistro: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection("prestamos").add(doc)
+    .then(() => {
+      document.getElementById('prestamo-mensaje').textContent = '¡Préstamo registrado! Nº: ' + prestamonumero;
+      document.getElementById('form-prestamo').reset();
+      mostrarProximoNumeroPrestamo();
+    })
+    .catch(e => {
+      document.getElementById('prestamo-mensaje').textContent = "Error: " + e.message;
+    });
+}
+
+// --- BUSCAR PRÉSTAMOS (por texto) ---
+async function buscarPrestamos() {
+  const busqueda = document.getElementById('buscar-prestamos').value.trim().toLowerCase();
+  const divResultados = document.getElementById('resultados-prestamos');
+  divResultados.innerHTML = '<p>Buscando...</p>';
+  try {
+    let query = db.collection('prestamos').orderBy('fechaentrega', 'desc').limit(50);
+    const snapshot = await query.get();
+    let docs = snapshot.docs;
+    if (busqueda) {
+      docs = docs.filter(doc => {
+        const d = doc.data();
+        return (
+          (d.concepto && d.concepto.toLowerCase().includes(busqueda)) ||
+          (d.deudor && d.deudor.toLowerCase().includes(busqueda)) ||
+          (d.acreedor && d.acreedor.toLowerCase().includes(busqueda)) ||
+          (d.estado && d.estado.toLowerCase().includes(busqueda))
+        );
+      });
+    }
+    if (docs.length === 0) {
+      divResultados.innerHTML = '<p>No se encontraron préstamos.</p>';
+      return;
+    }
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Tipo</th>
+          <th>Acreedor</th>
+          <th>Deudor</th>
+          <th>Monto</th>
+          <th>Interés</th>
+          <th>Total Préstamo</th>
+          <th>Saldo Pendiente</th>
+          <th>Fecha entrega</th>
+          <th>Vencimiento</th>
+          <th>Abono</th>
+          <th>Estado</th>
+          <th>Forma de pago</th>
+          <th>Concepto</th>
+          <th>Notas</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    docs.forEach(doc => {
+      const d = doc.data();
+      html += `<tr>
+        <td>${d.prestamonumero || ''}</td>
+        <td>${d.tipo || ''}</td>
+        <td>${d.acreedor || ''}</td>
+        <td>${d.deudor || ''}</td>
+        <td>${d.monto?.toFixed(2) ?? ''}</td>
+        <td>${d.interes || ''}</td>
+        <td>${d.totalprestamo?.toFixed(2) ?? ''}</td>
+        <td>${d.saldopendiente?.toFixed(2) ?? ''}</td>
+        <td>${d.fechaentrega ? new Date(d.fechaentrega.seconds*1000).toLocaleString() : ''}</td>
+        <td>${d.fechavencimiento ? new Date(d.fechavencimiento.seconds*1000).toLocaleString() : ''}</td>
+        <td>${d.abono?.toFixed(2) ?? '0.00'}</td>
+        <td>${d.estado || ''}</td>
+        <td>${d.formapago || ''}</td>
+        <td>${d.concepto || ''}</td>
+        <td>${d.notas || ''}</td>
+        <td>${d.personaqueregistro || ''}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    divResultados.innerHTML = html;
+  } catch (e) {
+    divResultados.innerHTML = '<p>Error buscando préstamos.</p>';
+    console.error(e);
+  }
+}
+
+// --- BUSCAR PRÉSTAMO POR NÚMERO ---
+async function buscarPrestamoPorNumero() {
+  const numero = parseInt(document.getElementById('buscar-numero-prestamo').value);
+  const divResultados = document.getElementById('resultados-prestamos');
+  if (isNaN(numero) || numero <= 0) {
+    divResultados.innerHTML = '<p>Ingresa un número de préstamo válido.</p>';
+    return;
+  }
+  divResultados.innerHTML = '<p>Buscando...</p>';
+  try {
+    const snap = await db.collection('prestamos').where('prestamonumero', '==', numero).limit(2).get();
+    if (snap.empty) {
+      divResultados.innerHTML = '<p>No se encontró ningún préstamo con ese número.</p>';
+      return;
+    }
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Tipo</th>
+          <th>Acreedor</th>
+          <th>Deudor</th>
+          <th>Monto</th>
+          <th>Interés</th>
+          <th>Total Préstamo</th>
+          <th>Saldo Pendiente</th>
+          <th>Fecha entrega</th>
+          <th>Vencimiento</th>
+          <th>Abono</th>
+          <th>Estado</th>
+          <th>Forma de pago</th>
+          <th>Concepto</th>
+          <th>Notas</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    snap.forEach(doc => {
+      const d = doc.data();
+      html += `<tr>
+        <td>${d.prestamonumero || ''}</td>
+        <td>${d.tipo || ''}</td>
+        <td>${d.acreedor || ''}</td>
+        <td>${d.deudor || ''}</td>
+        <td>${d.monto?.toFixed(2) ?? ''}</td>
+        <td>${d.interes || ''}</td>
+        <td>${d.totalprestamo?.toFixed(2) ?? ''}</td>
+        <td>${d.saldopendiente?.toFixed(2) ?? ''}</td>
+        <td>${d.fechaentrega ? new Date(d.fechaentrega.seconds*1000).toLocaleString() : ''}</td>
+        <td>${d.fechavencimiento ? new Date(d.fechavencimiento.seconds*1000).toLocaleString() : ''}</td>
+        <td>${d.abono?.toFixed(2) ?? '0.00'}</td>
+        <td>${d.estado || ''}</td>
+        <td>${d.formapago || ''}</td>
+        <td>${d.concepto || ''}</td>
+        <td>${d.notas || ''}</td>
+        <td>${d.personaqueregistro || ''}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    divResultados.innerHTML = html;
+  } catch (e) {
+    divResultados.innerHTML = '<p>Error buscando préstamo por número.</p>';
+    console.error(e);
+  }
+}
+
+// Inicializar el próximo número de préstamo al cargar la tab de préstamos
+if (typeof mostrarProximoNumeroPrestamo === 'function') {
+  document.addEventListener('DOMContentLoaded', mostrarProximoNumeroPrestamo);
+}
+function showPrestamosTab(tab, event) {
+  // Oculta ambas sub-secciones
+  document.getElementById('prestamos-registro').style.display = 'none';
+  document.getElementById('prestamos-busqueda').style.display = 'none';
+  // Muestra solo la que corresponde
+  document.getElementById('prestamos-' + tab).style.display = 'block';
+  // Quita clase activa de los botones
+  document.querySelectorAll('#prestamos-tabs-menu .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+  // Activa el botón correcto
+  if(event && event.target) event.target.classList.add('active');
+}
+// --- COBROS ---
+// Ventas al crédito (por cobrar)
+async function listarCuentasPorCobrar() {
+  const div = document.getElementById('cobros-por-cobrar-lista');
+  div.innerHTML = '<em>Cargando...</em>';
+  try {
+    const snap = await db.collection('ventas').get();
+    let html = `<table><thead>
+      <tr>
+        <th>Factura</th>
+        <th>Cliente</th>
+        <th>Total</th>
+        <th>Abono</th>
+        <th>Saldo Pendiente</th>
+        <th>Fecha</th>
+        <th>Acción</th>
+      </tr>
+      </thead><tbody>`;
+    let found = false;
+    snap.forEach(doc => {
+      const d = doc.data();
+      const saldoPendiente = d.saldoPendiente ?? ((d.total ?? 0) - (d.abono ?? 0));
+      if (saldoPendiente > 0) {
+        found = true;
+        html += `<tr>
+          <td>${d.numeroFactura}</td>
+          <td>${d.clienteNombre}</td>
+          <td>${d.total?.toFixed(2) ?? "0.00"}</td>
+          <td>${d.abono?.toFixed(2) ?? "0.00"}</td>
+          <td>${saldoPendiente.toFixed(2)}</td>
+          <td>${d.fecha ? new Date(d.fecha.seconds*1000).toLocaleString() : ""}</td>
+          <td>
+            <button onclick="abrirModalPago('ventas', '${doc.id}', ${d.abono ?? 0}, ${saldoPendiente}, ${d.total ?? 0})">Abonar</button>
+          </td>
+        </tr>`;
+      }
+    });
+    html += '</tbody></table>';
+    div.innerHTML = found ? html : '<p>No hay cuentas por cobrar.</p>';
+  } catch (e) {
+    div.innerHTML = '<p>Error al cargar.</p>';
+  }
+}
+// Inventario al crédito (por pagar)
+async function listarCuentasPorPagar() {
+  const div = document.getElementById('cobros-por-pagar-lista');
+  div.innerHTML = '<em>Cargando...</em>';
+  try {
+    const snap = await db.collection('inventario').get();
+    let html = `<table><thead>
+      <tr>
+        <th>Recibo</th>
+        <th>Proveedor</th>
+        <th>Total</th>
+        <th>Abono</th>
+        <th>Saldo Pendiente</th>
+        <th>Fecha</th>
+        <th>Acción</th>
+      </tr>
+      </thead><tbody>`;
+    let found = false;
+    snap.forEach(doc => {
+      const d = doc.data();
+      const saldoPendiente = d.saldoPendiente ?? ((d.total ?? 0) - (d.abono ?? 0));
+      if (saldoPendiente > 0) {
+        found = true;
+        html += `<tr>
+          <td>${d.numeroRecibo}</td>
+          <td>${d.proveedorNombre}</td>
+          <td>${d.total?.toFixed(2) ?? "0.00"}</td>
+          <td>${d.abono?.toFixed(2) ?? "0.00"}</td>
+          <td>${saldoPendiente.toFixed(2)}</td>
+          <td>${d.fecha_actualizacion ? new Date(d.fecha_actualizacion.seconds*1000).toLocaleString() : ""}</td>
+          <td>
+            <button onclick="abrirModalPago('inventario', '${doc.id}', ${d.abono ?? 0}, ${saldoPendiente}, ${d.total ?? 0})">Abonar</button>
+          </td>
+        </tr>`;
+      }
+    });
+    html += '</tbody></table>';
+    div.innerHTML = found ? html : '<p>No hay cuentas por pagar.</p>';
+  } catch (e) {
+    div.innerHTML = '<p>Error al cargar.</p>';
+  }
+}
+
+// Préstamos
+async function listarPrestamosCobros() {
+  const div = document.getElementById('cobros-prestamos-lista');
+  div.innerHTML = '<em>Cargando...</em>';
+  try {
+    const snap = await db.collection('prestamos').get();
+    let html = `<table><thead>
+  <tr>
+    <th>N°</th>
+    <th>Tipo</th>
+    <th>Acreedor</th>
+    <th>Deudor</th>
+    <th>Total</th>
+    <th>Abono</th>
+    <th>Saldo Pendiente</th>
+    <th>Estado</th>
+    <th>Vencimiento</th>
+    <th>Acción</th>
+  </tr>
+  </thead><tbody>`;
+    let found = false;
+    snap.forEach(doc => {
+      const d = doc.data();
+      if ((d.saldopendiente ?? 0) > 0) {
+        found = true;
+        html += `<tr>
+  <td>${d.prestamonumero}</td>
+  <td>${d.tipo === 'prestado' ? 'Por Cobrar' : 'Por Pagar'}</td>
+  <td>${d.acreedor}</td>
+  <td>${d.deudor}</td>
+  <td>${d.totalprestamo?.toFixed(2) ?? "0.00"}</td>
+  <td>${d.abono?.toFixed(2) ?? "0.00"}</td>
+  <td>${d.saldopendiente?.toFixed(2) ?? "0.00"}</td>
+  <td>${d.estado}</td>
+  <td>${d.fechavencimiento ? new Date(d.fechavencimiento.seconds*1000).toLocaleString() : ""}</td>
+  <td>
+    <button onclick="abrirModalPago('prestamos', '${doc.id}', ${d.abono ?? 0}, ${d.saldopendiente ?? ((d.totalprestamo ?? 0)-(d.abono ?? 0))}, ${d.totalprestamo ?? 0})">Abonar</button>
+  </td>
+</tr>`;
+      }
+    });
+    html += '</tbody></table>';
+    div.innerHTML = found ? html : '<p>No hay préstamos pendientes.</p>';
+  } catch (e) {
+    div.innerHTML = '<p>Error al cargar préstamos.</p>';
+  }
+}
+// === ABONOS/PAGOS DESDE COBROS ===
+function abrirModalPago(tipo, id, abonoActual=0, saldoPendiente=0, total=0) {
+  document.getElementById('modal-tipo').value = tipo;
+  document.getElementById('modal-id').value = id;
+  document.getElementById('modal-monto').value = '';
+  document.getElementById('modal-forma').value = 'Efectivo';
+  document.getElementById('modal-pago-mensaje').textContent = '';
+  document.getElementById('modal-historial').innerHTML = '<em>Cargando historial...</em>';
+  // Haz visible el modal y centra el formulario
+  document.getElementById('modal-pago').style.display = 'flex';
+  // Carga el historial de abonos
+  mostrarHistorial(tipo, id);
+}
+
+function cerrarModalPago() {
+  document.getElementById('modal-pago').style.display = 'none';
+  // Limpia el historial para la próxima vez
+  document.getElementById('modal-historial').innerHTML = '';
+}
+
+async function registrarPago(event) {
+  event.preventDefault();
+  const tipo = document.getElementById('modal-tipo').value;           // 'ventas', 'inventario' o 'prestamos'
+  const id = document.getElementById('modal-id').value;               // ID del documento
+  const monto = parseFloat(document.getElementById('modal-monto').value); // Monto a abonar
+  const forma = document.getElementById('modal-forma').value;         // Forma de pago
+  const msg = document.getElementById('modal-pago-mensaje');
+
+  if (monto <= 0) {
+    msg.textContent = "Monto inválido";
+    return;
+  }
+
+  try {
+    // Determina la colección
+    let col = tipo === 'ventas' ? 'ventas'
+            : tipo === 'inventario' ? 'inventario'
+            : tipo === 'prestamos' ? 'prestamos'
+            : '';
+    if (!col) {
+      msg.textContent = "Colección inválida";
+      return;
+    }
+
+    // Referencia y datos actuales
+    const ref = db.collection(col).doc(id);
+    const docSnap = await ref.get();
+    if (!docSnap.exists) {
+      msg.textContent = "Documento no encontrado";
+      return;
+    }
+
+    let data = docSnap.data();
+    let abonoActual = data.abono || 0;
+    let nuevoAbono = abonoActual + monto;
+    let total = data.total || data.totalprestamo || 0;
+    let nuevoSaldo = total - nuevoAbono;
+
+    // === HISTORIAL DE ABONOS ===
+    // Usamos arrayUnion para agregar solo el nuevo abono, así evitamos problemas de concurrencia y de sobrescribir otros abonos.
+    let abonoHistorial = {
+  fecha: new Date(),
+  monto,
+  forma
+};
+
+let updateData = {
+  abono: nuevoAbono,
+  formaPago: forma,
+  historial_abonos: firebase.firestore.FieldValue.arrayUnion(abonoHistorial)
+};
+if (tipo === 'prestamos') {
+  updateData.saldopendiente = nuevoSaldo;
+} else {
+  updateData.saldoPendiente = nuevoSaldo;
+}
+
+// Si la deuda se pagó, cambia el estado:
+if (nuevoSaldo <= 0) {
+  updateData.estado = "Cancelado";
+}
+
+await ref.update(updateData);
+
+    msg.textContent = "¡Abono registrado!";
+
+    // Refresca el historial de abonos en el modal (opcional pero recomendado)
+    mostrarHistorial(tipo, id);
+
+    setTimeout(() => {
+      cerrarModalPago();
+      if (tipo === 'ventas') listarCuentasPorCobrar();
+      if (tipo === 'inventario') listarCuentasPorPagar();
+      if (tipo === 'prestamos') listarPrestamosCobros();
+    }, 900);
+
+  } catch (e) {
+    msg.textContent = "Error: " + e.message;
+  }
+}
+
+function mostrarHistorial(tipo, id) {
+  const ref = db.collection(tipo).doc(id);
+  ref.get().then(docSnap => {
+    if (docSnap.exists) {
+      const data = docSnap.data();
+      const historial = (data.historial_abonos || []).sort((a, b) => {
+        if (!a.fecha || !b.fecha) return 0;
+        return new Date(a.fecha) - new Date(b.fecha);
+      });
+      let html = '<b>Historial de abonos:</b>';
+      if (!historial.length) {
+        html += '<div style="color:#999;">No hay abonos registrados.</div>';
+      } else {
+        html += `<table style="width:100%; font-size:0.97em;"><thead>
+        <tr><th>Monto</th><th>Forma</th><th>Fecha</th></tr></thead><tbody>`;
+        historial.forEach(item => {
+          let fechaTxt = "";
+          if (item.fecha && item.fecha.toDate) {
+            fechaTxt = item.fecha.toDate().toLocaleString();
+          } else if (item.fecha) {
+            try {
+              fechaTxt = new Date(item.fecha).toLocaleString();
+            } catch(e) {
+              fechaTxt = item.fecha;
+            }
+          }
+          html += `<tr>
+            <td>$${parseFloat(item.monto).toFixed(2)}</td>
+            <td>${item.forma}</td>
+            <td>${fechaTxt}</td>
+          </tr>`;
+        });
+        html += "</tbody></table>";
+      }
+      document.getElementById('modal-historial').innerHTML = html;
+    }
+  });
+}
+    </script>
+<!-- MODAL DE ABONOS/PAGOS -->
+<div id="modal-pago" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0009; z-index:9999; align-items:center; justify-content:center;">
+  <form id="modal-form-pago" style="background:#fff; margin:auto; padding:36px 28px; border-radius:12px; box-shadow:0 2px 18px #2226; min-width:320px; max-width:90vw; display:flex; flex-direction:column; gap:12px;" onsubmit="registrarPago(event)">
+    <input type="hidden" id="modal-tipo" />
+    <input type="hidden" id="modal-id" />
+    <label><b>Monto a abonar:</b></label>
+    <input type="number" id="modal-monto" min="0.01" step="0.01" required />
+    <label>Forma de pago:</label>
+    <select id="modal-forma">
+      <option value="Efectivo">Efectivo</option>
+      <option value="Tarjeta">Tarjeta</option>
+      <option value="Transferencia">Transferencia</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <div style="display:flex; gap:10px; justify-content:end;">
+      <button type="submit">Registrar</button>
+      <button type="button" onclick="cerrarModalPago()">Cancelar</button>
+    </div>
+    <div id="modal-pago-mensaje" style="color:#d72660; font-weight:bold;"></div>
+    <div id="modal-historial" style="margin-top:18px; background:#f6f6f6; border-radius:8px; padding:10px 12px; max-height:180px; overflow:auto;">
+      <!-- Aquí se mostrará el historial de abonos -->
+    </div>
+  </form>
+</div>
+</body>
+</html>
