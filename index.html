@@ -527,12 +527,8 @@
   <!-- Sección Cliente -->
   <div class="sub-tab-section-ventas active" id="sub-tab-ventas-cliente">
     <section>
-      <h2>Cliente para la venta</h2>
-      <label for="select-cliente">Selecciona cliente existente:</label>
-      <select id="select-cliente">
-        <option value="">-- Seleccionar cliente --</option>
-      </select>
-      <p>O ingresa nuevo cliente:</p>
+      
+      <p>INGRESA NUEVO CLIENTE:</p>
       <label for="cliente-nombre">Nombre:</label>
       <input type="text" id="cliente-nombre" placeholder="Nombre cliente" />
       <label for="cliente-correo">Correo:</label>
@@ -552,8 +548,8 @@
       <h2>Agregar Productos a la Venta</h2>
       <!-- ======= Campo para seleccionar cliente EXISTENTE en esta venta ======= -->
       <div style="margin-bottom: 16px;">
-        <label for="select-cliente-venta"><b>Cliente:</b></label>
-        <select id="select-cliente-venta" required>
+        <label for="select-cliente"><b>Cliente:</b></label>
+        <select id="select-cliente">
           <option value="">-- Seleccionar cliente --</option>
           <!-- Opciones se llenan dinámicamente -->
         </select>
@@ -948,163 +944,49 @@ function showReporteTab(tipo, event) {
   if (event && event.target) event.target.classList.add('active');
   cargarReporte(tipo);
 }
+
 async function cargarReporte(tipo) {
   const div = document.getElementById('reporte-contenido');
   div.innerHTML = '<em>Cargando reporte...</em>';
 
-  // --- Ajuste para zona horaria de Panamá UTC-5 ---
-  const ahora = new Date();
-  const PANAMA_OFFSET = -5;
-  // Hoy a las 00:00:00 en Panamá
-  const hoy = new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate(), 0, 0, 0));
-  hoy.setHours(hoy.getHours() + PANAMA_OFFSET);
+  // Llama a tu Cloud Function
+  const url = `https://us-central1-servicios-em.cloudfunctions.net/generarReporte?tipo=${tipo}`;
 
-  // Función para comparar fecha Firestore con hoy en UTC-5
-  const esDeHoy = (fechaFS) => {
-    if (!fechaFS) return false;
-    const f = fechaFS.seconds ? new Date(fechaFS.seconds * 1000) : new Date(fechaFS);
-    f.setHours(f.getHours() + PANAMA_OFFSET);
-    return (
-      f.getFullYear() === hoy.getFullYear() &&
-      f.getMonth() === hoy.getMonth() &&
-      f.getDate() === hoy.getDate()
-    );
-  };
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Error al obtener el reporte');
+    const data = await resp.json();
 
-  // --- Cargar TODO el stock a memoria (clave: codigo) ---
-  let stockSnap = await db.collection('stock').get();
-  let stockMap = {};
-  stockSnap.forEach(doc => {
-    const s = doc.data();
-    if (s.codigo) stockMap[s.codigo] = s;
-  });
-
-  // --- Procesa ventas ---
-  let ventasSnap = await db.collection('ventas').get();
-  let totalVentas = 0, totalAbonos = 0, totalSaldo = 0, nVentas = 0;
-  let totalCostoVendida = 0, gananciaBruta = 0;
-  ventasSnap.forEach(doc => {
-    let v = doc.data();
-    if (tipo === 'diario' && !esDeHoy(v.fecha)) return;
-    nVentas++;
-    totalVentas += v.total || 0;
-    totalAbonos += v.abono || 0;
-    totalSaldo += (v.saldoPendiente != null ? v.saldoPendiente : (v.total || 0) - (v.abono || 0));
-    if (Array.isArray(v.productos)) {
-      v.productos.forEach(p => {
-        let codigo = p.codigo;
-        let cantidad = p.cantidad || 0;
-        let precioVenta = p.precio_unitario || 0;
-        // Busca costo promedio en stock
-        let stockProd = stockMap[codigo];
-        let costoPromedio = stockProd ? (stockProd.costo_promedio || stockProd.costo_unitario || 0) : 0;
-        let costoTotal = costoPromedio * cantidad;
-        let ventaTotal = precioVenta * cantidad;
-        totalCostoVendida += costoTotal;
-        gananciaBruta += (ventaTotal - costoTotal);
-      });
-    }
-  });
-
-  // --- Ingresos extras ---
-  let ingresosSnap = await db.collection('ingresos').get();
-  let totalIngresos = 0, nIngresos = 0;
-  ingresosSnap.forEach(doc => {
-    let i = doc.data();
-    if (tipo === 'diario' && !esDeHoy(i.fecha)) return;
-    nIngresos++;
-    totalIngresos += i.monto || 0;
-  });
-
-  // --- Gastos ---
-  let gastosSnap = await db.collection('gastos').get();
-  let totalGastos = 0, nGastos = 0;
-  gastosSnap.forEach(doc => {
-    let g = doc.data();
-    if (tipo === 'diario' && !esDeHoy(g.fecha)) return;
-    nGastos++;
-    totalGastos += g.monto || 0;
-  });
-
-  // --- Préstamos ---
-  let prestamosSnap = await db.collection('prestamos').get();
-  let totalPrestamosPendientes = 0;
-  prestamosSnap.forEach(doc => {
-    let p = doc.data();
-    if (tipo === 'diario' && p.fechaentrega && !esDeHoy(p.fechaentrega)) return;
-    totalPrestamosPendientes += p.saldopendiente || 0;
-  });
-
-  // --- Inventario comprado y compras diarias/históricas (CORREGIDO) ---
-  let inventarioSnap = await db.collection('inventario').get();
-  let comprasDiarias = 0, comprasTotales = 0, nInventarioHoy = 0, nInventario = 0;
-
-inventarioSnap.forEach(doc => {
-  let inv = doc.data();
-  let fecha = inv.fecha_actualizacion;
-  let esHoy = fecha && esDeHoy(fecha);
-  let compraDocumento = 0;
-
-  if (Array.isArray(inv.productos)) {
-    inv.productos.forEach(p => {
-      if (typeof p.costo_unitario === 'number' && typeof p.stock_inicial === 'number') {
-        compraDocumento += p.costo_unitario * p.stock_inicial;
-      }
-    });
+    div.innerHTML = `
+      <div class="reporte-block">
+        <h2>Reporte ${data.tipo === 'diario' ? 'Diario' : 'Total'} del Negocio</h2>
+        <ul>
+          <li><b>Total Ventas:</b> $${data.totalVentas.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${data.nVentas} ventas)</span></li>
+          <li><b>Total Ingresos extra:</b> $${data.totalIngresos.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${data.nIngresos} ingresos)</span></li>
+          <li><b>Total Gastos:</b> $${data.totalGastos.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${data.nGastos} gastos)</span></li>
+          <li><b>Total Abonos recibidos ventas:</b> $${data.totalAbonos.toFixed(2)}</li>
+          <li><b>Total saldo pendiente de cobro (ventas):</b> $${data.totalSaldo.toFixed(2)}</li>
+          <li><b>Total de préstamos pendientes:</b> $${data.totalPrestamosPendientes.toFixed(2)}</li>
+          <li><b>Costo de mercancía vendida:</b> $${data.totalCostoVendida.toFixed(2)}</li>
+          <li class="${data.gananciaNeta >= 0 ? 'ganancia' : 'perdida'}"><b>Ganancia Neta:</b> $${data.gananciaNeta.toFixed(2)}</li>
+          <li class="${data.gananciaBruta >= 0 ? 'ganancia' : 'perdida'}"><b>Ganancia Bruta:</b> $${data.gananciaBruta.toFixed(2)}</li>
+        </ul>
+        <hr>
+        <ul>
+          ${
+            data.tipo === 'diario'
+              ? `<li><b>Compras realizadas hoy (inventario):</b> $${data.comprasDiarias.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${data.nInventarioHoy} movimientos hoy)</span></li>`
+              : `<li><b>Compras totales (inventario):</b> $${data.comprasTotales.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${data.nInventario} movimientos históricos)</span></li>`
+          }
+          <li><b>Stock Actual (valor costo):</b> $${data.stockActualValorCosto.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${data.nStock} productos)</span></li>
+          <li><b>Stock Actual (valor venta):</b> $${data.stockActualValorVenta.toFixed(2)}</li>
+          <li><b>Ganancia Potencial si vendes todo el stock:</b> $${data.stockGananciaPotencial.toFixed(2)}</li>
+        </ul>
+      </div>
+    `;
+  } catch (err) {
+    div.innerHTML = `<span style="color:red">Error al cargar el reporte: ${err.message}</span>`;
   }
-
-  comprasTotales += compraDocumento;
-  if (esHoy) {
-    comprasDiarias += compraDocumento;
-    nInventarioHoy++;
-  }
-  nInventario++;
-});
-
-  // --- Stock actual y ganancia potencial ---
-  let stockActualValorCosto = 0, stockActualValorVenta = 0, stockGananciaPotencial = 0, nStock = 0;
-  Object.values(stockMap).forEach(s => {
-    if (typeof s.cantidad === 'number' && s.cantidad > 0) {
-      let costo = typeof s.costo_promedio === 'number' ? s.costo_promedio : (typeof s.costo_unitario === 'number' ? s.costo_unitario : 0);
-      let precio = typeof s.precio_unitario === 'number' ? s.precio_unitario : 0;
-      stockActualValorCosto += s.cantidad * costo;
-      stockActualValorVenta += s.cantidad * precio;
-      stockGananciaPotencial += s.cantidad * (precio - costo);
-      nStock++;
-    }
-  });
-
-  // --- GANANCIA NETA ---
-  let gananciaNeta = gananciaBruta - totalGastos;
-
-  // --- Render HTML ---
-  div.innerHTML = `
-    <div class="reporte-block">
-      <h2>Reporte ${tipo === 'diario' ? 'Diario' : 'Total'} del Negocio</h2>
-      <ul>
-        <li><b>Total Ventas:</b> $${totalVentas.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nVentas} ventas)</span></li>
-        <li><b>Total Ingresos extra:</b> $${totalIngresos.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nIngresos} ingresos)</span></li>
-        <li><b>Total Gastos:</b> $${totalGastos.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nGastos} gastos)</span></li>
-        <li><b>Total Abonos recibidos ventas:</b> $${totalAbonos.toFixed(2)}</li>
-        <li><b>Total saldo pendiente de cobro (ventas):</b> $${totalSaldo.toFixed(2)}</li>
-        <li><b>Total de préstamos pendientes:</b> $${totalPrestamosPendientes.toFixed(2)}</li>
-        <li><b>Costo de mercancía vendida:</b> $${totalCostoVendida.toFixed(2)}</li>
-        <li class="${gananciaNeta >= 0 ? 'ganancia' : 'perdida'}"><b>Ganancia Neta:</b> $${gananciaNeta.toFixed(2)}</li>
-        <li class="${gananciaBruta >= 0 ? 'ganancia' : 'perdida'}"><b>Ganancia Bruta:</b> $${gananciaBruta.toFixed(2)}</li>
-      </ul>
-      <hr>
-      <ul>
-        ${
-          tipo === 'diario'
-            ? `<li><b>Compras realizadas hoy (inventario):</b> $${comprasDiarias.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nInventarioHoy} movimientos hoy)</span></li>`
-            : `<li><b>Compras totales (inventario):</b> $${comprasTotales.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nInventario} movimientos históricos)</span></li>`
-        }
-        <li><b>Stock Actual (valor costo):</b> $${stockActualValorCosto.toFixed(2)} <span style="color:#888;font-size:0.9em;">(${nStock} productos)</span></li>
-        <li><b>Stock Actual (valor venta):</b> $${stockActualValorVenta.toFixed(2)}</li>
-        <li><b>Ganancia Potencial si vendes todo el stock:</b> $${stockGananciaPotencial.toFixed(2)}</li>
-      </ul>
-    </div>
-  `;
 }
 // --- PROVEEDORES/INVENTARIO ---
 async function cargarProveedores() {
@@ -1751,61 +1633,72 @@ document.getElementById('abono').addEventListener('input', () => { actualizarTot
 function agregarAutorellenoVenta(fila) {
   const inputProducto = fila.querySelector('input.producto');
   const inputCodigo = fila.querySelector('input.codigo');
+
   inputProducto.addEventListener('input', async () => {
     const val = inputProducto.value.trim().toLowerCase();
     if (!val) return;
     try {
-      const snapshot = await db.collection('stock').where('productoLower', '==', val).limit(1).get();
-      if (!snapshot.empty) rellenarFilaVenta(fila, snapshot.docs[0].data());
-    } catch (e) { console.error('Error autorelleno producto venta:', e); }
+      const res = await fetch(`https://us-central1-servicios-em.cloudfunctions.net/buscarProductoPorCodigo?producto=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      if (res.ok && data.producto) {
+        rellenarFilaVenta(fila, data.producto);
+      }
+    } catch (e) {
+      console.error('Error autorelleno producto venta:', e);
+    }
   });
+
   inputCodigo.addEventListener('input', async () => {
     const val = inputCodigo.value.trim();
     if (!val) return;
     try {
-      const snapshot = await db.collection('stock').where('codigo', '==', val).limit(1).get();
-      if (!snapshot.empty) rellenarFilaVenta(fila, snapshot.docs[0].data());
-    } catch (e) { console.error('Error autorelleno código venta:', e); }
+      const res = await fetch(`https://us-central1-servicios-em.cloudfunctions.net/buscarProductoPorCodigo?codigo=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      if (res.ok && data.producto) {
+        rellenarFilaVenta(fila, data.producto);
+      }
+    } catch (e) {
+      console.error('Error autorelleno código venta:', e);
+    }
   });
 }
 
-// Ajuste aquí: también mostrar los campos de fecha/hora si se autocompleta la fila
 function rellenarFilaVenta(fila, data) {
   fila.querySelector('input.producto').value = data.producto || '';
   fila.querySelector('input.codigo').value = data.codigo || '';
   fila.querySelector('input.categoria').value = data.categoria || '';
   fila.querySelector('input.tipo').value = data.tipo || '';
   fila.querySelector('input.unidad').value = data.unidad || '';
-  fila.querySelector('input.precio_unitario').value = data.precio_unitario?.toFixed(2) || '0.00';
-  fila.querySelector('input.itbms').value = data.itbms?.toFixed(2) || '0.00';
-  fila.querySelector('input.descuento').value = data.descuento?.toFixed(2) || '0.00';
+  fila.querySelector('input.precio_unitario').value = Number(data.precio_unitario).toFixed(2) || '0.00';
+  fila.querySelector('input.itbms').value = Number(data.itbms).toFixed(2) || '0.00';
+  fila.querySelector('input.descuento').value = Number(data.descuento).toFixed(2) || '0.00';
   actualizarSubtotalFila(fila);
   actualizarTotales();
 
-  // MOSTRAR los campos de fecha/hora si el producto es Starlink, ocultar si no
+  // Mostrar campos extra si el producto es Starlink
   mostrarCamposStarlinkSiCorresponde(fila);
 }
-
-async function cargarClientes() {
-  const selects = [
-    document.getElementById('select-cliente'),
-    document.getElementById('select-cliente-venta')
-  ];
-  for (const select of selects) {
-    if (!select) continue;
-    select.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
+// --- Tu función cargarClientes (deja igual) ---
+// Función universal para llenar cualquier select de clientes
+async function cargarClientes(selectId = 'select-cliente') {
+  const select = document.getElementById(selectId);
+  if (!select) {
+    console.error('No se encontró el select con id:', selectId);
+    return;
   }
+  select.innerHTML = '<option value="">-- Selecciona cliente --</option>';
   try {
-    const snapshot = await db.collection('clientes').orderBy('nombre').get();
-    snapshot.forEach(doc => {
-      const c = doc.data();
-      for (const select of selects) {
-        if (!select) continue;
-        const option = document.createElement('option');
-        option.value = doc.id;
-        option.textContent = c.nombre;
-        select.appendChild(option);
-      }
+    const res = await fetch("https://us-central1-servicios-em.cloudfunctions.net/obtenerClientes");
+    const data = await res.json();
+    if (!data.clientes || data.clientes.length === 0) {
+      console.warn('No hay clientes en la base de datos');
+      return;
+    }
+    data.clientes.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.id;
+      option.textContent = c.nombre;
+      select.appendChild(option);
     });
   } catch (error) {
     console.error('Error cargando clientes:', error);
@@ -1825,14 +1718,19 @@ async function registrarCliente() {
     return;
   }
   try {
-    await db.collection('clientes').add({
-      nombre,
-      clienteLower: nombre.toLowerCase(),
-      correo,
-      direccion,
-      telefono,
-      fecha_registro: firebase.firestore.FieldValue.serverTimestamp()
+    // Envía los datos al backend usando fetch a tu función registrarCliente
+    const res = await fetch("https://us-central1-servicios-em.cloudfunctions.net/registrarCliente", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ nombre, correo, direccion, telefono })
     });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Error desconocido");
+    }
     msg.textContent = 'Cliente registrado con éxito';
     msg.className = '';
     limpiarCamposCliente();
@@ -1842,138 +1740,132 @@ async function registrarCliente() {
     msg.className = 'error';
   }
 }
+
 function limpiarCamposCliente() {
   document.getElementById('cliente-nombre').value = '';
   document.getElementById('cliente-correo').value = '';
   document.getElementById('cliente-direccion').value = '';
   document.getElementById('cliente-telefono').value = '';
 }
+
 // === NUMERO DE FACTURA AUTOMÁTICO ===
 async function obtenerNuevoNumeroFactura() {
-  // Busca el último número de factura y suma uno
-  const snap = await db.collection('ventas').orderBy('numeroFactura', 'desc').limit(1).get();
-  let ultimo = 0;
-  if (!snap.empty && snap.docs[0].data().numeroFactura) {
-    ultimo = snap.docs[0].data().numeroFactura;
+  try {
+    const res = await fetch("https://us-central1-servicios-em.cloudfunctions.net/obtenerNuevoNumeroFactura");
+    if (!res.ok) throw new Error("No se pudo obtener el número de factura");
+    const data = await res.json();
+    return data.nuevoNumeroFactura; // Asegúrate que el backend responde con esta propiedad
+  } catch (e) {
+    console.error("Error al obtener nuevo número de factura:", e);
+    return null;
   }
-  return ultimo + 1;
 }
 async function registrarVenta() {
-  const clienteSelect = document.getElementById('select-cliente-venta');
-const clienteId = clienteSelect.value;
-const clienteNombre = clienteSelect.selectedOptions[0]?.textContent || '';
+  const clienteSelect = document.getElementById('select-cliente');
+  const clienteId = clienteSelect.value;
+  const clienteNombre = clienteSelect.selectedOptions[0]?.textContent || '';
   const formaPago = document.getElementById('forma-pago').value;
   const abono = parseFloat(document.getElementById('abono').value) || 0;
   const saldoPendiente = parseFloat(document.getElementById('saldo-pendiente').value) || 0;
   const msg = document.getElementById('venta-mensaje');
   msg.textContent = '';
   msg.className = '';
+
   if (!clienteId) {
     msg.textContent = 'Selecciona un cliente para la venta';
     msg.className = 'error';
     return;
   }
+
   const filas = document.querySelectorAll('#contenedor-filas-ventas .fila-venta');
   if (filas.length === 0) {
     msg.textContent = 'Agrega al menos un producto a la venta';
     msg.className = 'error';
     return;
   }
-  try {
-    const clienteDoc = await db.collection('clientes').doc(clienteId).get();
-    if (!clienteDoc.exists) {
-      msg.textContent = 'Cliente no encontrado';
+
+  // Recolectar productos de la venta
+  let productosVenta = [];
+  for (const fila of filas) {
+    const producto = fila.querySelector('input.producto').value.trim();
+    const codigo = fila.querySelector('input.codigo').value.trim();
+    const categoria = fila.querySelector('input.categoria').value.trim();
+    const tipo = fila.querySelector('input.tipo').value.trim();
+    const unidad = fila.querySelector('input.unidad').value.trim();
+    const cantidad = parseInt(fila.querySelector('input.cantidad').value) || 0;
+    const precio_unitario = parseFloat(fila.querySelector('input.precio_unitario').value) || 0;
+    const descuento = parseFloat(fila.querySelector('input.descuento').value) || 0;
+    const itbms = parseFloat(fila.querySelector('input.itbms').value) || 0;
+    const subtotal = parseFloat(fila.querySelector('input.subtotal').value) || 0;
+
+    // Solo para Internet Starlink
+    let starlink_inicio = null, starlink_fin = null;
+    if (producto.toLowerCase().includes('starlink')) {
+      starlink_inicio = fila.querySelector('input.starlink-inicio').value;
+      starlink_fin = fila.querySelector('input.starlink-fin').value;
+      if (!starlink_inicio || !starlink_fin) {
+        msg.textContent = 'Debes ingresar fecha y hora de inicio y fin para Internet Starlink.';
+        msg.className = 'error';
+        return;
+      }
+    }
+
+    if (cantidad <= 0) {
+      msg.textContent = `Cantidad inválida para el producto "${producto}"`;
       msg.className = 'error';
       return;
     }
-    const clienteData = clienteDoc.data();
-    let productosVenta = [];
-    const batch = db.batch();
-    for (const fila of filas) {
-      const producto = fila.querySelector('input.producto').value.trim();
-      const codigo = fila.querySelector('input.codigo').value.trim();
-      const categoria = fila.querySelector('input.categoria').value.trim();
-      const tipo = fila.querySelector('input.tipo').value.trim();
-      const unidad = fila.querySelector('input.unidad').value.trim();
-      const cantidad = parseInt(fila.querySelector('input.cantidad').value) || 0;
-      const precio_unitario = parseFloat(fila.querySelector('input.precio_unitario').value) || 0;
-      const descuento = parseFloat(fila.querySelector('input.descuento').value) || 0;
-      const itbms = parseFloat(fila.querySelector('input.itbms').value) || 0;
-      const subtotal = parseFloat(fila.querySelector('input.subtotal').value) || 0;
-
-      // Solo para Internet Starlink, pide fechas y las guarda en el objeto
-      let starlink_inicio = null, starlink_fin = null;
-      if (producto.toLowerCase().includes('starlink')) {
-        starlink_inicio = fila.querySelector('input.starlink-inicio').value;
-        starlink_fin = fila.querySelector('input.starlink-fin').value;
-        if (!starlink_inicio || !starlink_fin) {
-          msg.textContent = 'Debes ingresar fecha y hora de inicio y fin para Internet Starlink.';
-          msg.className = 'error';
-          return;
-        }
-      }
-
-      // Stock y validación como siempre
-      if (cantidad <= 0) {
-        msg.textContent = `Cantidad inválida para el producto "${producto}"`;
-        msg.className = 'error';
-        return;
-      }
-      if (!producto) {
-        msg.textContent = 'Producto vacío en una fila';
-        msg.className = 'error';
-        return;
-      }
-      const stockQuery = await db.collection('stock').where('codigo', '==', codigo).limit(1).get();
-      if (stockQuery.empty) {
-        msg.textContent = `Producto "${producto}" con código "${codigo}" no existe en stock`;
-        msg.className = 'error';
-        return;
-      }
-      const stockDoc = stockQuery.docs[0];
-      const stockData = stockDoc.data();
-      if (stockData.cantidad < cantidad) {
-        msg.textContent = `No hay suficiente stock para "${producto}". Disponible: ${stockData.cantidad}, solicitado: ${cantidad}`;
-        msg.className = 'error';
-        return;
-      }
-
-      productosVenta.push({
-        producto, codigo, categoria, tipo, unidad, cantidad, precio_unitario, descuento, itbms, subtotal, stockId: stockDoc.id,
-        ...(starlink_inicio && { starlink_inicio }),
-        ...(starlink_fin && { starlink_fin })
-      });
+    if (!producto) {
+      msg.textContent = 'Producto vacío en una fila';
+      msg.className = 'error';
+      return;
     }
-    const numeroFactura = await obtenerNuevoNumeroFactura();
-    const ventaRef = db.collection('ventas').doc();
-    const ventaData = {
-      numeroFactura,
-      clienteId,
-      clienteNombre: clienteData.nombre,
-      productos: productosVenta.map(p => { const copy = {...p}; delete copy.stockId; return copy; }),
-      subtotal: parseFloat(document.getElementById('venta-subtotal').textContent),
-      descuento: parseFloat(document.getElementById('venta-descuento').textContent),
-      itbms: parseFloat(document.getElementById('venta-itbms').textContent),
-      total: parseFloat(document.getElementById('venta-total').textContent),
-      formaPago,
-      abono,
-      saldoPendiente,
-      fecha: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    batch.set(ventaRef, ventaData);
-    productosVenta.forEach(p => {
-      const stockRef = db.collection('stock').doc(p.stockId);
-      batch.update(stockRef, {
-        cantidad: firebase.firestore.FieldValue.increment(-p.cantidad)
-      });
+
+    productosVenta.push({
+      producto, codigo, categoria, tipo, unidad, cantidad, precio_unitario, descuento, itbms, subtotal,
+      ...(starlink_inicio && { starlink_inicio }),
+      ...(starlink_fin && { starlink_fin })
     });
-    await batch.commit();
+  }
+
+  // Valores numéricos de la venta
+  const subtotalVenta = parseFloat(document.getElementById('venta-subtotal').textContent);
+  const descuentoVenta = parseFloat(document.getElementById('venta-descuento').textContent);
+  const itbmsVenta = parseFloat(document.getElementById('venta-itbms').textContent);
+  const totalVenta = parseFloat(document.getElementById('venta-total').textContent);
+
+  try {
+    // Llamar a tu función cloud registrarVenta
+    const res = await fetch("https://us-central1-servicios-em.cloudfunctions.net/registrarVenta", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clienteId,
+        clienteNombre,
+        formaPago,
+        abono,
+        saldoPendiente,
+        productos: productosVenta,
+        subtotal: subtotalVenta,
+        descuento: descuentoVenta,
+        itbms: itbmsVenta,
+        total: totalVenta
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      msg.textContent = 'Error al registrar la venta: ' + (data.error || 'Error desconocido');
+      msg.className = 'error';
+      return;
+    }
+
     msg.textContent = 'Venta registrada correctamente y stock actualizado.';
     msg.className = '';
     limpiarFormularioVenta();
     cargarStock();
     cargarClientes();
-    document.getElementById('ventas-ultima-factura').textContent = "Última factura registrada: " + numeroFactura;
+    document.getElementById('ventas-ultima-factura').textContent = "Última factura registrada: " + data.numeroFactura;
     mostrarUltimoNumeroFactura();
   } catch (e) {
     msg.textContent = 'Error al registrar la venta: ' + e.message;
@@ -2117,7 +2009,6 @@ window.onload = function() {
   mostrarUltimoNumeroRecibo();
 };
 // === BUSCAR POR NÚMERO DE FACTURA ===
-// === BUSCAR POR NÚMERO DE RECIBO (INVENTARIO) ===
   async function buscarVentaPorNumeroFactura() {
   const num = parseInt(document.getElementById('buscar-num-factura').value);
   const resultadosDiv = document.getElementById('buscar-ventas-numfactura-resultados');
